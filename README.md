@@ -50,6 +50,7 @@ make install
 ```bash
 cp .env.local.example .env
 make start-infra # this starts a database and redis instance only
+# Note: the Postgres Docker image and data mount support Postgres 18+ by default. The image version is controlled by POSTGRES_VERSION (default: 18); if you have an existing DB volume created by an older Postgres version, back it up before switching or set POSTGRES_VERSION to the older version (e.g., 15).
 # this will start the SAQ worker, Vite development process, and Litestar
 uv run app run
 

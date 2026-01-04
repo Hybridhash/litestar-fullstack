@@ -10,7 +10,7 @@ def setup_environment() -> None:
     """Configure the environment variables and path."""
     current_path = Path(__file__).parent.parent.resolve()
     sys.path.append(str(current_path))
-    from app.config import get_settings
+    from app.config import get_settings  # noqa: PLC0415
 
     settings = get_settings()
     os.environ.setdefault("LITESTAR_APP", "app.asgi:create_app")
@@ -32,7 +32,7 @@ def run_cli() -> NoReturn:
     setup_environment()
 
     try:
-        from litestar.cli.main import litestar_group
+        from litestar.cli.main import litestar_group  # noqa: PLC0415
 
         sys.exit(litestar_group())
     except ImportError as exc:

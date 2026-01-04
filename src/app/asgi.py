@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 def create_app() -> Litestar:
     """Create ASGI application."""
 
-    from litestar import Litestar
+    from litestar import Litestar  # noqa: PLC0415
 
-    from app.server.core import ApplicationCore
+    from app.server.core import ApplicationCore  # noqa: PLC0415
 
     return Litestar(plugins=[ApplicationCore()])

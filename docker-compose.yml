@@ -32,7 +32,7 @@ services:
       POSTGRES_USER: "app"
       POSTGRES_DB: "app"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql
     restart: unless-stopped
     logging:
       options:

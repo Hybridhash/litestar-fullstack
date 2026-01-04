@@ -36,8 +36,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
     app_slug: str
 
     def on_cli_init(self, cli: Group) -> None:
-        from app.cli.commands import user_management_group
-        from app.config import get_settings
+        from app.cli.commands import user_management_group  # noqa: PLC0415
+        from app.config import get_settings  # noqa: PLC0415
 
         settings = get_settings()
         self.redis = settings.redis.get_client()
@@ -51,30 +51,37 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             app_config: The :class:`AppConfig <litestar.config.app.AppConfig>` instance.
         """
 
-        from uuid import UUID
+        from uuid import UUID  # noqa: PLC0415
 
-        from advanced_alchemy.exceptions import RepositoryError
-        from litestar.enums import RequestEncodingType
-        from litestar.params import Body
-        from litestar.security.jwt import Token
+        from advanced_alchemy.exceptions import RepositoryError  # noqa: PLC0415
+        from litestar.enums import RequestEncodingType  # noqa: PLC0415
+        from litestar.params import Body  # noqa: PLC0415
+        from litestar.security.jwt import Token  # noqa: PLC0415
 
-        from app.__about__ import __version__ as current_version
-        from app.config import app as config
-        from app.config import constants, get_settings
-        from app.db import models as m
-        from app.domain.accounts import signals as account_signals
-        from app.domain.accounts.controllers import AccessController, UserController, UserRoleController
-        from app.domain.accounts.deps import provide_user
-        from app.domain.accounts.guards import auth as jwt_auth
-        from app.domain.accounts.services import RoleService, UserService
-        from app.domain.system.controllers import SystemController
-        from app.domain.tags.controllers import TagController
-        from app.domain.teams import signals as team_signals
-        from app.domain.teams.controllers import TeamController, TeamMemberController
-        from app.domain.teams.services import TeamMemberService, TeamService
-        from app.domain.web.controllers import WebController
-        from app.lib.exceptions import ApplicationError, exception_to_http_response
-        from app.server import plugins
+        from app.__about__ import __version__ as current_version  # noqa: PLC0415
+        from app.config import app as config  # noqa: PLC0415
+        from app.config import constants, get_settings  # noqa: PLC0415
+        from app.db import models as m  # noqa: PLC0415
+        from app.domain.accounts import signals as account_signals  # noqa: PLC0415
+        from app.domain.accounts.controllers import (  # noqa: PLC0415
+            AccessController,
+            UserController,
+            UserRoleController,
+        )
+        from app.domain.accounts.deps import provide_user  # noqa: PLC0415
+        from app.domain.accounts.guards import auth as jwt_auth  # noqa: PLC0415
+        from app.domain.accounts.services import RoleService, UserService  # noqa: PLC0415
+        from app.domain.system.controllers import SystemController  # noqa: PLC0415
+        from app.domain.tags.controllers import TagController  # noqa: PLC0415
+        from app.domain.teams import signals as team_signals  # noqa: PLC0415
+        from app.domain.teams.controllers import (  # noqa: PLC0415
+            TeamController,
+            TeamMemberController,
+        )
+        from app.domain.teams.services import TeamMemberService, TeamService  # noqa: PLC0415
+        from app.domain.web.controllers import WebController  # noqa: PLC0415
+        from app.lib.exceptions import ApplicationError, exception_to_http_response  # noqa: PLC0415
+        from app.server import plugins  # noqa: PLC0415
 
         settings = get_settings()
         self.redis = settings.redis.get_client()

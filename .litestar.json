@@ -1,0 +1,25 @@
+{
+  "assetUrl": "/static/",
+  "deployAssetUrl": null,
+  "bundleDir": "/Users/ahmad/Desktop/Coding/Litestar.nosync/litestar-fullstack/src/app/domain/web/public",
+  "hotFile": "hot",
+  "resourceDir": "resources",
+  "staticDir": "public",
+  "manifest": "manifest.json",
+  "mode": "template",
+  "proxyMode": "vite",
+  "port": 5174,
+  "host": "localhost",
+  "ssrOutDir": null,
+  "types": null,
+  "logging": {
+    "level": "normal",
+    "showPathsAbsolute": false,
+    "suppressNpmOutput": false,
+    "suppressViteBanner": false,
+    "timestamps": false
+  },
+  "spa": null,
+  "executor": "node",
+  "litestarVersion": "2.19.0"
+}

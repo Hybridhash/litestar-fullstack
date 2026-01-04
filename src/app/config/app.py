@@ -18,15 +18,14 @@ from litestar.logging.config import (
 )
 from litestar.middleware.logging import LoggingMiddlewareConfig
 from litestar.plugins.problem_details import ProblemDetailsConfig
-from litestar.plugins.sqlalchemy import (
-    AlembicAsyncConfig,
-    AsyncSessionConfig,
-    SQLAlchemyAsyncConfig,
-)
+from litestar.plugins.sqlalchemy import AlembicAsyncConfig, AsyncSessionConfig, SQLAlchemyAsyncConfig
 from litestar.plugins.structlog import StructlogConfig
 from litestar.template import TemplateConfig
 from litestar_saq import CronJob, QueueConfig, SAQConfig
 from litestar_vite import ViteConfig
+
+# Construct ViteConfig using PathConfig and RuntimeConfig (litestar-vite v1.x API)
+from litestar_vite.config import PathConfig, RuntimeConfig
 
 from .base import get_settings
 
@@ -51,15 +50,24 @@ alchemy = SQLAlchemyAsyncConfig(
 )
 templates = TemplateConfig(engine=JinjaTemplateEngine(directory=settings.vite.TEMPLATE_DIR))
 problem_details = ProblemDetailsConfig(enable_for_all_http_exceptions=True)
+
+
 vite = ViteConfig(
-    bundle_dir=settings.vite.BUNDLE_DIR,
-    resource_dir=settings.vite.RESOURCE_DIR,
-    use_server_lifespan=settings.vite.USE_SERVER_LIFESPAN,
+    paths=PathConfig(
+        bundle_dir=settings.vite.BUNDLE_DIR,
+        resource_dir=settings.vite.RESOURCE_DIR,
+        asset_url=settings.vite.ASSET_URL,
+    ),
+    runtime=RuntimeConfig(
+        dev_mode=settings.vite.DEV_MODE,
+        start_dev_server=settings.vite.USE_SERVER_LIFESPAN,
+        host=settings.vite.HOST,
+        port=settings.vite.PORT,
+        is_react=settings.vite.ENABLE_REACT_HELPERS,
+        # If hot_reload is disabled, set proxy_mode=None to disable HMR
+        proxy_mode=None if not settings.vite.HOT_RELOAD else "vite",
+    ),
     dev_mode=settings.vite.DEV_MODE,
-    hot_reload=settings.vite.HOT_RELOAD,
-    is_react=settings.vite.ENABLE_REACT_HELPERS,
-    port=settings.vite.PORT,
-    host=settings.vite.HOST,
 )
 github_oauth = GitHubOAuth2(
     client_id=settings.app.GITHUB_OAUTH2_CLIENT_ID,

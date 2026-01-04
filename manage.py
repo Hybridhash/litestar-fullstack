@@ -8,13 +8,13 @@ def start_app() -> None:
 
     This invokes the same as the `app` command (`python -m app`).
     """
-    import sys
-    from pathlib import Path
+    import sys  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
 
     current_path = Path(__file__).parent.resolve()
     sys.path.append(str(current_path))
 
-    from app.__main__ import run_cli
+    from app.__main__ import run_cli  # noqa: PLC0415
 
     run_cli()
 

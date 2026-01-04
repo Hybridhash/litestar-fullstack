@@ -410,11 +410,11 @@ class Settings:
 
     @classmethod
     def from_env(cls, dotenv_filename: str = ".env") -> Settings:
-        from litestar.cli._utils import console
+        from litestar.cli._utils import console  # noqa: PLC0415
 
         env_file = Path(f"{os.curdir}/{dotenv_filename}")
         if env_file.is_file():
-            from dotenv import load_dotenv
+            from dotenv import load_dotenv  # noqa: PLC0415
 
             console.print(f"[yellow]Loading environment configuration from {dotenv_filename}[/]")
 
