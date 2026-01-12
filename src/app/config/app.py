@@ -1,10 +1,13 @@
 import logging
 import sys
 from functools import lru_cache
+from pathlib import Path
 from typing import cast
 
+import jinjax
 import structlog
 from httpx_oauth.clients.github import GitHubOAuth2
+from jinja2 import Environment, FileSystemLoader, pass_context
 from litestar.config.compression import CompressionConfig
 from litestar.config.cors import CORSConfig
 from litestar.config.csrf import CSRFConfig
@@ -23,9 +26,8 @@ from litestar.plugins.structlog import StructlogConfig
 from litestar.template import TemplateConfig
 from litestar_saq import CronJob, QueueConfig, SAQConfig
 from litestar_vite import ViteConfig
-
-# Construct ViteConfig using PathConfig and RuntimeConfig (litestar-vite v1.x API)
 from litestar_vite.config import PathConfig, RuntimeConfig
+from litestar_vite.loader import render_asset_tag, render_hmr_client, render_routes, render_static_asset
 
 from .base import get_settings
 
@@ -48,11 +50,25 @@ alchemy = SQLAlchemyAsyncConfig(
         script_location=settings.db.MIGRATION_PATH,
     ),
 )
-templates = TemplateConfig(engine=JinjaTemplateEngine(directory=settings.vite.TEMPLATE_DIR))
+_template_loader = FileSystemLoader([str(settings.vite.TEMPLATE_DIR)])
+_jinja_env = Environment(loader=_template_loader, autoescape=True, auto_reload=settings.vite.DEV_MODE, cache_size=0)
+
+_jinja_env.globals["vite_hmr"] = pass_context(render_hmr_client)
+_jinja_env.globals["vite"] = pass_context(render_asset_tag)
+_jinja_env.globals["vite_static"] = pass_context(render_static_asset)
+_jinja_env.globals["vite_routes"] = pass_context(render_routes)
+_jinja_env.add_extension(jinjax.JinjaX)
+_jinjax_catalog = jinjax.Catalog(jinja_env=_jinja_env)
+_components_dir = Path(settings.vite.TEMPLATE_DIR).parent / "components"
+_jinjax_catalog.add_folder(str(_components_dir))
+_jinjax_catalog.add_folder(str(settings.vite.TEMPLATE_DIR))
+_jinja_env.globals["catalog"] = _jinjax_catalog
+templates: TemplateConfig = TemplateConfig(instance=JinjaTemplateEngine.from_environment(_jinja_env))
 problem_details = ProblemDetailsConfig(enable_for_all_http_exceptions=True)
 
 
 vite = ViteConfig(
+    mode="htmx",
     paths=PathConfig(
         bundle_dir=settings.vite.BUNDLE_DIR,
         resource_dir=settings.vite.RESOURCE_DIR,
@@ -63,7 +79,7 @@ vite = ViteConfig(
         start_dev_server=settings.vite.USE_SERVER_LIFESPAN,
         host=settings.vite.HOST,
         port=settings.vite.PORT,
-        is_react=settings.vite.ENABLE_REACT_HELPERS,
+        # is_react=settings.vite.ENABLE_REACT_HELPERS, Excluded for HTMX mode
         # If hot_reload is disabled, set proxy_mode=None to disable HMR
         proxy_mode=None if not settings.vite.HOT_RELOAD else "vite",
     ),

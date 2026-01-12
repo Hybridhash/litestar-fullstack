@@ -1,0 +1,66 @@
+{#def team_total=0, query="", filter_by="all" #}
+<section class="space-y-6">
+  <div class="flex flex-col gap-2">
+    <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Teams</p>
+    <h1 class="text-3xl font-semibold">Team overview</h1>
+    <p class="max-w-2xl text-base-content/70">
+      Manage teams, memberships, and invitations from a single view.
+    </p>
+  </div>
+
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div class="space-y-3">
+          <div class="text-sm text-base-content/60">{{ team_total }} total teams</div>
+          <form class="flex w-full max-w-md gap-2" hx-get="/api/teams" hx-target="#teams-table">
+            <input
+              name="q"
+              value="{{ query }}"
+              placeholder="Search by team name"
+              class="input input-bordered w-full"
+              type="search"
+            />
+            <select class="select select-bordered" name="filter_by">
+              <option value="all" {{ "selected" if filter_by == "all" }}>All</option>
+              <option value="name" {{ "selected" if filter_by == "name" }}>Name</option>
+              <option value="slug" {{ "selected" if filter_by == "slug" }}>Slug</option>
+              <option value="members" {{ "selected" if filter_by == "members" }}>Members</option>
+              <option value="status" {{ "selected" if filter_by == "status" }}>Status</option>
+            </select>
+            <select class="select select-bordered" name="order">
+              <option value="asc">Asc</option>
+              <option value="desc">Desc</option>
+            </select>
+            <button class="btn btn-secondary" type="submit">Apply</button>
+          </form>
+        </div>
+        <div class="card w-full max-w-sm bg-base-200/60">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Create team</h3>
+            <!-- HTMX events keep Alpine's loading state in sync with the request. -->
+            <form
+              class="space-y-3"
+              x-data="{ loading: false }"
+              hx-post="/api/teams"
+              hx-target="#teams-table"
+              hx-swap="innerHTML"
+              hx-on::before-request="$el.__x.$data.loading = true"
+              hx-on::after-request="$el.__x.$data.loading = false; if (event.detail.successful) { $el.reset() }"
+            >
+              <forms.TextField label="Team name" name="name" placeholder="Platform" required={{ True }} />
+              <forms.TextField label="Description" name="description" placeholder="Optional description" />
+              <button class="btn btn-secondary btn-block" type="submit" :disabled="loading">
+                <span x-show="!loading">Create team</span>
+                <span x-show="loading">Creating...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div id="teams-table" hx-get="/api/teams" hx-trigger="load" hx-swap="innerHTML">
+        <div class="skeleton h-32 w-full"></div>
+      </div>
+    </div>
+  </div>
+</section>

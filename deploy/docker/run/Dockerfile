@@ -48,8 +48,8 @@ RUN apt-get install -y --no-install-recommends git build-essential curl \
 ## -------------------------- install application ----------------------------------- ##
 WORKDIR /workspace/app
 COPY pyproject.toml uv.lock README.md .pre-commit-config.yaml LICENSE Makefile \
-  package.json package-lock.json vite.config.ts tsconfig.json \
-  tailwind.config.cjs postcss.config.cjs components.json \
+  package.json package-lock.json vite.config.js \
+  tailwind.config.cjs postcss.config.cjs \
   ./
 COPY tools ./tools/
 RUN uvx nodeenv --quiet /opt/nodeenv/

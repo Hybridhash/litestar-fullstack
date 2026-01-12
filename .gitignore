@@ -179,3 +179,12 @@ db.duckdb
 local.duckdb
 
 requirements.txt
+
+*.tests
+.tests
+!.tests/__init__.py
+.tests/*
+tests/*
+
+.kiro/
+kiro/*

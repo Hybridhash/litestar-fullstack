@@ -20,6 +20,7 @@ from litestar.exceptions import PermissionDeniedException
 
 from app.config import constants
 from app.db import models as m
+from app.domain.sanitize.user_sanitize import sanitize_user_payload
 from app.lib import crypt
 
 
@@ -94,11 +95,15 @@ class UserService(SQLAlchemyAsyncRepositoryService[m.User]):
 
     async def _populate_model(self, data: ModelDictT[m.User]) -> ModelDictT[m.User]:
         data = schema_dump(data)
+        data = sanitize_user_payload(data)
         data = await self._populate_with_hashed_password(data)
         return await self._populate_with_role(data)
 
     async def _populate_with_hashed_password(self, data: ModelDictT[m.User]) -> ModelDictT[m.User]:
         if is_dict(data) and (password := data.pop("password", None)) is not None:
+            # Trim accidental whitespace so passwords aren't stored with unintended spaces.
+            if isinstance(password, str):
+                password = password.strip()
             data["hashed_password"] = await crypt.get_password_hash(password)
         return data
 

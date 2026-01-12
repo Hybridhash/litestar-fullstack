@@ -1,0 +1,55 @@
+<base.Layout
+  title="Litestar Fullstack"
+  description="Litestar server-rendered workspace"
+  keywords="litestar, htmx, alpine, daisyui"
+  show_nav={{ False }}
+  request={{ request }}
+>
+  <section class="grid gap-10 lg:grid-cols-2 lg:items-center">
+    <div class="space-y-6">
+      <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Litestar Fullstack</p>
+      <h1 class="text-4xl font-semibold lg:text-5xl">
+        Ship faster with server-rendered UI and focused interactions.
+      </h1>
+      <p class="text-base-content/70">
+        This workspace now uses DaisyUI, JinjaX components, HTMX, and Alpine.js.
+        Keep your stack lean while staying expressive.
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <a
+          class="btn btn-primary"
+          href="/login"
+          hx-get="/login"
+          hx-target="#page-shell"
+          hx-select="#page-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+        >
+          Sign in
+        </a>
+        <a
+          class="btn btn-outline"
+          href="/register"
+          hx-get="/register"
+          hx-target="#page-shell"
+          hx-select="#page-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+        >
+          Create account
+        </a>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title">Migration snapshot</h2>
+        <ul class="space-y-3 text-sm text-base-content/70">
+          <li>• React removed, templates rendered on the server.</li>
+          <li>• DaisyUI components with custom Litestar theme.</li>
+          <li>• HTMX endpoints for partial updates.</li>
+          <li>• Alpine.js stores for UI state.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</base.Layout>

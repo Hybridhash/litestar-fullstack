@@ -1,4 +1,5 @@
 from litestar import Controller, get
+from litestar.enums import MediaType
 from litestar.response import Template
 from litestar.status_codes import HTTP_200_OK
 
@@ -19,4 +20,4 @@ class WebController(Controller):
     )
     async def index(self, path: str | None = None) -> Template:
         """Serve site root."""
-        return Template(template_name="site/index.html.j2")
+        return Template(template_name="site/index.jinja", media_type=MediaType.HTML)

@@ -18,6 +18,7 @@ from uuid_utils.compat import uuid4
 
 from app.config import constants
 from app.db import models as m
+from app.domain.sanitize.team_sanitize import sanitize_team_payload
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -44,16 +45,19 @@ class TeamService(SQLAlchemyAsyncRepositoryService[m.Team]):
 
     async def to_model_on_create(self, data: ModelDictT[m.Team]) -> ModelDictT[m.Team]:
         data = schema_dump(data)
+        data = sanitize_team_payload(data)
         data = await self._populate_slug(data)
         return await self._populate_with_owner_and_tags(data, "create")
 
     async def to_model_on_update(self, data: ModelDictT[m.Team]) -> ModelDictT[m.Team]:
         data = schema_dump(data)
+        data = sanitize_team_payload(data)
         data = await self._populate_slug(data)
         return await self._populate_with_owner_and_tags(data, "update")
 
     async def to_model_on_upsert(self, data: ModelDictT[m.Team]) -> ModelDictT[m.Team]:
         data = schema_dump(data)
+        data = sanitize_team_payload(data)
         data = await self._populate_slug(data)
         return await self._populate_with_owner_and_tags(data, "upsert")
 

@@ -54,7 +54,7 @@ class TeamMemberController(Controller):
         if is_member:
             msg = "User is already a member of the team."
             raise IntegrityError(msg)
-        team_obj.members.append(m.TeamMember(user_id=user_obj.id, role=m.TeamRoles.MEMBER))
+        team_obj.members.append(m.TeamMember(user_id=user_obj.id, team_id=team_id, role=m.TeamRoles.MEMBER))
         team_obj = await teams_service.update(item_id=team_id, data=team_obj)
         return teams_service.to_schema(schema_type=Team, data=team_obj)
 

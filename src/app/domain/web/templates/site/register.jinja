@@ -1,0 +1,44 @@
+<base.Layout
+  title="Create account"
+  description="Create a Litestar account"
+  keywords="register"
+  show_nav={{ False }}
+  request={{ request }}
+>
+  <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+    <div class="space-y-4">
+      <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Get started</p>
+      <h1 class="text-3xl font-semibold">Create your account</h1>
+      <p class="text-base-content/70">
+        Join your team and start building with the new SSR stack.
+      </p>
+      <div class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
+        <forms.RegisterForm error={{ error }} />
+      </div>
+      <p class="text-sm text-base-content/60">
+        Already have an account?
+        <a
+          href="/login"
+          class="link link-primary"
+          hx-get="/login"
+          hx-target="#page-shell"
+          hx-select="#page-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+        >
+          Sign in
+        </a>.
+      </p>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title">New stack highlights</h2>
+        <ul class="space-y-3 text-sm text-base-content/70">
+          <li>• DaisyUI components with a custom theme.</li>
+          <li>• Declarative HTML interactions via HTMX.</li>
+          <li>• Alpine.js stores for minimal client state.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</base.Layout>

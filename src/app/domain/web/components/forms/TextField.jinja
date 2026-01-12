@@ -1,0 +1,20 @@
+{#def label, name, type="text", placeholder="", value="", required=False, error="" #}
+<label class="form-control w-full">
+  <div class="label">
+    <span class="label-text">{{ label }}</span>
+  </div>
+  <input
+    class="input input-bordered w-full"
+    type="{{ type }}"
+    name="{{ name }}"
+    value="{{ value }}"
+    placeholder="{{ placeholder }}"
+    {{ "required" if required }}
+    {{ attrs.render() }}
+  />
+  {% if error %}
+    <div class="label">
+      <span class="label-text-alt text-error">{{ error }}</span>
+    </div>
+  {% endif %}
+</label>

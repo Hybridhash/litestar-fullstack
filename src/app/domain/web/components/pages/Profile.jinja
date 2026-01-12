@@ -1,0 +1,44 @@
+{#def user=None #}
+<section class="space-y-6">
+  <div class="flex flex-col gap-2">
+    <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Profile</p>
+    <h1 class="text-3xl font-semibold">Account profile</h1>
+    <p class="max-w-2xl text-base-content/70">
+      Keep your account details up to date.
+    </p>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-[2fr,1fr]">
+    {% include "partials/profile_card.jinja" %}
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body gap-4">
+        <h3 class="card-title text-lg">Update profile</h3>
+        <!-- HTMX events keep Alpine's loading state in sync with the request. -->
+        <form
+          class="space-y-3"
+          x-data="{ loading: false }"
+          action="/api/me"
+          method="post"
+          hx-post="/api/me"
+          hx-target="#profile-card"
+          hx-swap="outerHTML"
+          hx-on::before-request="$el.__x.$data.loading = true"
+          hx-on::after-request="$el.__x.$data.loading = false"
+        >
+          <forms.TextField label="Name" name="name" value={{ user.name if user else "" }} />
+          <forms.TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={{ user.email if user else "" }}
+            required={{ True }}
+          />
+          <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
+            <span x-show="!loading">Save changes</span>
+            <span x-show="loading">Saving...</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

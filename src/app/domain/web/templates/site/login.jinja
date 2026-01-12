@@ -1,0 +1,44 @@
+<base.Layout
+  title="Sign in"
+  description="Sign in to your Litestar workspace"
+  keywords="login"
+  show_nav={{ False }}
+  request={{ request }}
+>
+  <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+    <div class="space-y-4">
+      <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Welcome back</p>
+      <h1 class="text-3xl font-semibold">Sign in to continue</h1>
+      <p class="text-base-content/70">
+        Use your credentials to access teams, users, and system settings.
+      </p>
+      <div class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
+        <forms.LoginForm error={{ error }} />
+      </div>
+      <p class="text-sm text-base-content/60">
+        Need an account?
+        <a
+          href="/register"
+          class="link link-primary"
+          hx-get="/register"
+          hx-target="#page-shell"
+          hx-select="#page-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+        >
+          Create one here
+        </a>.
+      </p>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title">What you get</h2>
+        <ul class="space-y-3 text-sm text-base-content/70">
+          <li>• Server-rendered templates with JinjaX.</li>
+          <li>• Dynamic updates powered by HTMX.</li>
+          <li>• Lightweight interactions with Alpine.js.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</base.Layout>

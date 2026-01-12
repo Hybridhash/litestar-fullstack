@@ -1,11 +1,9 @@
-const { fontFamily } = require("tailwindcss/defaultTheme")
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
   content: [
-    "src/app/domain/web/{resources,templates}/**/*.{js,jsx,ts,cjs,mjs,tsx,vue,j2,html,htm}",
-    "{resources,templates}/**/*.{js,cjs,mjs,jsx,ts,tsx,vue,j2,html,htm}",
+    "src/app/domain/web/{components,templates}/**/*.{jinja,j2,html,htm}",
+    "resources/**/*.{js,cjs,mjs,css}",
   ],
   theme: {
     container: {
@@ -76,5 +74,32 @@ module.exports = {
     require("tailwindcss-animate"),
     require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),
+    require("daisyui"),
   ],
+  daisyui: {
+    themes: [
+      {
+        litestar: {
+          primary: "#2563eb",
+          "primary-content": "#eff6ff",
+          secondary: "#f59e0b",
+          "secondary-content": "#1f1300",
+          accent: "#14b8a6",
+          "accent-content": "#062b2a",
+          neutral: "#0f172a",
+          "neutral-content": "#e2e8f0",
+          "base-100": "#f8fafc",
+          "base-200": "#eef2f7",
+          "base-300": "#dde4ee",
+          "base-content": "#0b1220",
+          info: "#38bdf8",
+          success: "#22c55e",
+          warning: "#f97316",
+          error: "#ef4444",
+        },
+      },
+      "light",
+      "dark",
+    ],
+  },
 }

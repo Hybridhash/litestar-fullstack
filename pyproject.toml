@@ -18,6 +18,7 @@ dependencies = [
   "litestar[jinja,jwt,redis,structlog]",
   "advanced-alchemy[uuid]>=0.33.2",
   "asyncpg",
+  "jinjax",
   "python-dotenv",
   "passlib[argon2]",
   "litestar-saq",
@@ -26,6 +27,7 @@ dependencies = [
   "aiosqlite",
   "httptools",
   "httpx-oauth>=0.16.1",
+  "nh3",
 ]
 description = "Opinionated template for a Litestar application."
 keywords = ["litestar", "sqlalchemy", "alembic", "fullstack", "api", "asgi", "litestar", "vite", "spa"]
@@ -71,7 +73,9 @@ linting = [
 ]
 test = [
   "bump-my-version",
+  "hypothesis",
   "pytest",
+  "pytest-anyio",
   "pytest-xdist",
   "pytest-mock",
   "pytest-cov",

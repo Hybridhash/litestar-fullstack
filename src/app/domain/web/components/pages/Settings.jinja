@@ -1,0 +1,52 @@
+{#def theme="litestar" #}
+<section class="space-y-6" x-data="{ theme: '{{ theme }}' }">
+  <div class="flex flex-col gap-2">
+    <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Settings</p>
+    <h1 class="text-3xl font-semibold">Workspace settings</h1>
+    <p class="max-w-2xl text-base-content/70">
+      Control the visual theme and quick preferences for your workspace.
+    </p>
+  </div>
+
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-medium">Theme</p>
+          <p class="text-sm text-base-content/60">Choose a DaisyUI theme.</p>
+        </div>
+        <select
+          class="select select-bordered"
+          x-model="theme"
+          @change="document.documentElement.setAttribute('data-theme', theme)"
+        >
+          <option value="litestar">Litestar</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-medium">Compact tables</p>
+          <p class="text-sm text-base-content/60">Reduce table padding for dense data.</p>
+        </div>
+        <input type="checkbox" class="toggle toggle-primary" x-model="$store.ui.compactTables" />
+      </div>
+      <div class="divider"></div>
+      <div x-data="{ open: false }" class="rounded-box border border-base-300 bg-base-100/60 p-4">
+        <button type="button" class="flex w-full items-center justify-between" @click="open = !open">
+          <span class="font-medium">Advanced preferences</span>
+          <span class="text-sm text-base-content/60" x-text="open ? 'Hide' : 'Show'"></span>
+        </button>
+        <div class="mt-3 space-y-2 text-sm text-base-content/70" x-show="open" x-transition>
+          <p>Enable this panel to explore new features before they ship.</p>
+          <label class="flex items-center justify-between">
+            <span>Enable experimental UI</span>
+            <input type="checkbox" class="toggle toggle-secondary" />
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

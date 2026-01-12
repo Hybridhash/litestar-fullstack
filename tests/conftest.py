@@ -40,7 +40,7 @@ def _patch_settings(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(base, "get_settings", get_settings)
 
 
-@pytest.fixture(name="redis", autouse=True)
+@pytest.fixture(name="redis")
 async def fx_redis(redis_service: RedisService) -> AsyncGenerator[Redis, None]:
     """Redis instance for testing.
 

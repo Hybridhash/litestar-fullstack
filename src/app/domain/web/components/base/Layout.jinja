@@ -1,0 +1,20 @@
+{#def title="", description="", keywords="", show_nav=True, body_class="", request=None #}
+<!DOCTYPE html>
+<html lang="en" data-theme="litestar" class="min-h-full">
+  <head>
+    <base.Head title={{ title }} description={{ description }} keywords={{ keywords }} />
+    {{ vite_hmr() }}
+    {{ vite('resources/main.css') }}
+  </head>
+  <body class="min-h-full {{ body_class }}">
+    <div id="page-shell" class="min-h-screen bg-base-200" hx-history-elt>
+      {% if show_nav %}
+        <base.Navigation />
+      {% endif %}
+      <main id="page-content" class="mx-auto w-full max-w-6xl px-4 py-8 lg:px-8">
+        {{ content }}
+      </main>
+    </div>
+    {{ vite('resources/main.js') }}
+  </body>
+</html>

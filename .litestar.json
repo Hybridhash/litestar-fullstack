@@ -6,7 +6,7 @@
   "resourceDir": "resources",
   "staticDir": "public",
   "manifest": "manifest.json",
-  "mode": "template",
+  "mode": "htmx",
   "proxyMode": "vite",
   "port": 5174,
   "host": "localhost",

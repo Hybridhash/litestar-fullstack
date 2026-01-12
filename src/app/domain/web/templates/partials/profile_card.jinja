@@ -1,0 +1,22 @@
+<div id="profile-card" class="card bg-base-100 shadow-sm">
+  <div class="card-body gap-4">
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <p class="text-sm text-base-content/60">Name</p>
+        <p class="text-lg font-medium">{{ user.name if user else "Unknown" }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-base-content/60">Email</p>
+        <p class="text-lg font-medium">{{ user.email if user else "Unknown" }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-base-content/60">Status</p>
+        <span class="badge badge-primary">{{ "Active" if user and user.is_active else "Inactive" }}</span>
+      </div>
+      <div>
+        <p class="text-sm text-base-content/60">Role</p>
+        <span class="badge badge-outline">{{ user.roles[0].role.name if user and user.roles else "Member" }}</span>
+      </div>
+    </div>
+  </div>
+</div>

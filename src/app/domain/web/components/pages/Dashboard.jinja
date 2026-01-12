@@ -1,0 +1,76 @@
+{#def user=None, team_total=0, user_total=0 #}
+<section class="space-y-8">
+  <div class="flex flex-col gap-2">
+    <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Dashboard</p>
+    <h1 class="text-3xl font-semibold">
+      Welcome back{% if user %}, {{ user.name or user.email }}{% endif %}.
+    </h1>
+    <p class="max-w-2xl text-base-content/70">
+      Your Litestar workspace is now server-rendered with DaisyUI, JinjaX, HTMX, and Alpine.js.
+    </p>
+  </div>
+
+  <div class="stats stats-vertical w-full bg-base-100 shadow-sm lg:stats-horizontal">
+    <div class="stat">
+      <div class="stat-title">Teams</div>
+      <div class="stat-value text-primary">{{ team_total }}</div>
+      <div class="stat-desc">Across all environments</div>
+    </div>
+    <div class="stat">
+      <div class="stat-title">Users</div>
+      <div class="stat-value text-secondary">{{ user_total }}</div>
+      <div class="stat-desc">Active profiles</div>
+    </div>
+    <div class="stat">
+      <div class="stat-title">Status</div>
+      <div class="stat-value text-accent">Live</div>
+      <div class="stat-desc">HTMX-ready endpoints</div>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <div class="card col-span-2 bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title">Teams snapshot</h2>
+        <p class="text-sm text-base-content/70">
+          This section streams data from the server using HTMX.
+        </p>
+        <div id="team-list" hx-get="/api/teams" hx-trigger="load" hx-swap="innerHTML">
+          <div class="skeleton h-24 w-full"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title">Quick actions</h2>
+        <div class="space-y-2 text-sm text-base-content/70">
+          <p>Invite new teammates or review user roles.</p>
+          <div class="flex flex-col gap-2">
+            <a
+              href="/teams"
+              class="btn btn-primary btn-sm"
+              hx-get="/teams"
+              hx-target="#page-shell"
+              hx-select="#page-shell"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+            >
+              Manage teams
+            </a>
+            <a
+              href="/users"
+              class="btn btn-outline btn-sm"
+              hx-get="/users"
+              hx-target="#page-shell"
+              hx-select="#page-shell"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+            >
+              View users
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

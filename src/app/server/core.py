@@ -8,6 +8,7 @@ from litestar.di import Provide
 from litestar.openapi.config import OpenAPIConfig
 from litestar.openapi.plugins import ScalarRenderPlugin
 from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
+from litestar.plugins.htmx import HTMXRequest
 from litestar.security.jwt import OAuth2Login
 from litestar.stores.redis import RedisStore
 from litestar.stores.registry import StoreRegistry
@@ -80,6 +81,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         )
         from app.domain.teams.services import TeamMemberService, TeamService  # noqa: PLC0415
         from app.domain.web.controllers import WebController  # noqa: PLC0415
+        from app.domain.web.pages import SiteController  # noqa: PLC0415
         from app.lib.exceptions import ApplicationError, exception_to_http_response  # noqa: PLC0415
         from app.server import plugins  # noqa: PLC0415
 
@@ -100,6 +102,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         app_config = jwt_auth.on_app_init(app_config)
         # security
         app_config.cors_config = config.cors
+        app_config.request_class = HTMXRequest
         # templates
         app_config.template_config = config.templates
         # plugins
@@ -109,6 +112,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
                 plugins.granian,
                 plugins.alchemy,
                 plugins.vite,
+                plugins.htmx,
                 plugins.saq,
                 plugins.problem_details,
                 plugins.oauth,
@@ -125,6 +129,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
                 UserRoleController,
                 TeamMemberController,
                 TagController,
+                SiteController,
                 WebController,
             ],
         )
@@ -178,4 +183,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             str: App slug prefixed cache key.
         """
 
-        return f"{self.app_slug}:{default_cache_key_builder(request)}"
+        cache_key = default_cache_key_builder(request)
+        hx_request = request.headers.get("HX-Request")
+        if hx_request:
+            cache_key = f"{cache_key}:hx={hx_request}"
+        return f"{self.app_slug}:{cache_key}"

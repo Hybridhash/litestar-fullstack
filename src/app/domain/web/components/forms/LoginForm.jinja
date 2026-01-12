@@ -1,0 +1,25 @@
+{#def error="" #}
+<!-- HTMX events keep Alpine's loading state in sync with the request. -->
+<form
+  class="space-y-4"
+  method="post"
+  action="/api/access/login"
+  hx-post="/api/access/login"
+  hx-target="#auth-feedback"
+  hx-swap="innerHTML"
+  x-data="{ loading: false }"
+  hx-on::before-request="$el.__x.$data.loading = true"
+  hx-on::after-request="$el.__x.$data.loading = false"
+>
+  <forms.TextField label="Email" name="username" type="email" placeholder="you@example.com" required={{ True }} />
+  <forms.TextField label="Password" name="password" type="password" placeholder="••••••••" required={{ True }} />
+  <ui.Button type="submit" variant="primary" block={{ True }} x-bind:disabled="loading">
+    <span x-show="!loading">Sign in</span>
+    <span x-show="loading">Signing in...</span>
+  </ui.Button>
+  <div id="auth-feedback" class="text-sm text-error">
+    {% if error %}
+      {{ error }}
+    {% endif %}
+  </div>
+</form>

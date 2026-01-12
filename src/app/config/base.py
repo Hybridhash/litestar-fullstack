@@ -187,7 +187,6 @@ class ViteSettings:
     """The port to start vite on.  Default to `5173`"""
     HOT_RELOAD: bool = field(default_factory=get_env("VITE_HOT_RELOAD", True))
     """Start `vite` with HMR enabled."""
-    ENABLE_REACT_HELPERS: bool = field(default_factory=get_env("VITE_ENABLE_REACT_HELPERS", True))
     """Enable React support in HMR."""
     BUNDLE_DIR: Path = field(default_factory=get_env("VITE_BUNDLE_DIR", Path(f"{BASE_DIR}/domain/web/public")))
     """Bundle directory"""

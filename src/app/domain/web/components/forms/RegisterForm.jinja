@@ -1,0 +1,29 @@
+{#def error="" #}
+<!-- HTMX events keep Alpine's loading state in sync with the request. -->
+<form class="space-y-4" method="post" action="/api/access/signup" hx-post="/api/access/signup"
+  hx-target="#register-feedback" hx-swap="innerHTML" x-data="{ loading: false }"
+  hx-on::before-request="$el.__x.$data.loading = true" hx-on::after-request="$el.__x.$data.loading = false">
+  <forms.TextField label="Name" name="name" type="text" placeholder="Jane Doe" required={{ True }} />
+  <forms.TextField
+    label="Email"
+    name="email"
+    type="email"
+    placeholder="you@example.com"
+    required={{ True }}
+    hx_get="/api/access/signup/email"
+    hx_trigger="keyup changed delay:500ms"
+    hx_target="#register-feedback"
+    hx_swap="innerHTML"
+  />
+  <forms.TextField label="Password" name="password" type="password" placeholder="Create a password" required={{ True
+    }} />
+  <ui.Button type="submit" variant="secondary" block={{ True }} x-bind:disabled="loading">
+    <span x-show="!loading">Create account</span>
+    <span x-show="loading">Creating...</span>
+  </ui.Button>
+  <div id="register-feedback" class="text-sm text-error">
+    {% if error %}
+    {{ error }}
+    {% endif %}
+  </div>
+</form>

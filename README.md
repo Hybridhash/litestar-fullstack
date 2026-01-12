@@ -27,7 +27,7 @@ It contains most of the boilerplate required for a production web API with featu
 - Latest Litestar configured with best practices
 - Integration with [SQLAlchemy 2.0](https://www.sqlalchemy.org/), [SAQ (Simple Asynchronous Queue)](https://saq-py.readthedocs.io/en/latest/), [Structlog](https://www.structlog.org/en/stable/), and [Granian](<(https://www.structlog.org/en/stable/)](https://github.com/emmett-framework/granian)>)
 - Extends built-in Litestar click CLI
-- Frontend integrated with Vite and includes Jinja2 templates that integrate with Vite websocket/HMR support
+- Server-rendered frontend with JinjaX components, DaisyUI styling, HTMX interactions, and Alpine.js state, integrated with Vite HMR
 - Multi-stage Docker build using a minimal Python 3.13 runtime image.
   - Optional Multi-stage Distroless Docker build.
 - Pre-configured user model that includes teams and associated team roles
@@ -159,6 +159,12 @@ Are you sure you you want migrate the database to the "head" revision? [y/n]: y
 2023-10-01T19:44:13.783804Z [info     ] Pool disposed. Pool size: 5  Connections
  in pool: 0 Current Overflow: -5 Current Checked out connections: 0
 2023-10-01T19:44:13.784013Z [info     ] Pool recreating
+```
+
+After the upgrade, load the default roles so signup can assign the configured role:
+
+```bash
+❯ app users create-roles
 ```
 
 ## Worker Commands
