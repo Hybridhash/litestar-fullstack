@@ -13,6 +13,7 @@ pytestmark = pytest.mark.anyio
 
 async def test_superuser_role_access(
     client: "AsyncClient",
+    csrf_headers: dict[str, str],
     user_token_headers: dict[str, str],
     superuser_token_headers: dict[str, str],
 ) -> None:
@@ -25,14 +26,14 @@ async def test_superuser_role_access(
     response = await client.post(
         "/api/roles/superuser/assign",
         json={"userName": "user@example.com"},
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
     )
     assert response.status_code == 201
     assert response.json()["message"] == "Successfully assigned the 'superuser' role to user@example.com."
     response = await client.patch(
         "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999",
         json={"name": "TEST UPDATE"},
-        headers=user_token_headers,
+        headers={**csrf_headers, **user_token_headers},
     )
     assert response.status_code == 200
     # retrieve
@@ -51,12 +52,18 @@ async def test_superuser_role_access(
     response = await client.post(
         "/api/roles/superuser/revoke",
         json={"userName": "user@example.com"},
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
     )
     assert response.status_code == 201
-    response = await client.delete("/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999", headers=user_token_headers)
+    response = await client.delete(
+        "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999",
+        headers={**csrf_headers, **user_token_headers},
+    )
     assert response.status_code == 403
-    response = await client.delete("/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b", headers=user_token_headers)
+    response = await client.delete(
+        "/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b",
+        headers={**csrf_headers, **user_token_headers},
+    )
     assert response.status_code == 204
 
     # retrieve should now fail

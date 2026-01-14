@@ -10,7 +10,6 @@ from httpx_oauth.clients.github import GitHubOAuth2
 from jinja2 import Environment, FileSystemLoader, pass_context
 from litestar.config.compression import CompressionConfig
 from litestar.config.cors import CORSConfig
-from litestar.config.csrf import CSRFConfig
 from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.logging.config import (
     LoggingConfig,
@@ -30,15 +29,13 @@ from litestar_vite.config import PathConfig, RuntimeConfig
 from litestar_vite.loader import render_asset_tag, render_hmr_client, render_routes, render_static_asset
 
 from .base import get_settings
+from .csrf import create_csrf_config, csrf_token
 
 settings = get_settings()
 
+
 compression = CompressionConfig(backend="gzip")
-csrf = CSRFConfig(
-    secret=settings.app.SECRET_KEY,
-    cookie_secure=settings.app.CSRF_COOKIE_SECURE,
-    cookie_name=settings.app.CSRF_COOKIE_NAME,
-)
+csrf = create_csrf_config(settings.app)
 cors = CORSConfig(allow_origins=cast("list[str]", settings.app.ALLOWED_CORS_ORIGINS))
 alchemy = SQLAlchemyAsyncConfig(
     engine_instance=settings.db.get_engine(),
@@ -57,6 +54,9 @@ _jinja_env.globals["vite_hmr"] = pass_context(render_hmr_client)
 _jinja_env.globals["vite"] = pass_context(render_asset_tag)
 _jinja_env.globals["vite_static"] = pass_context(render_static_asset)
 _jinja_env.globals["vite_routes"] = pass_context(render_routes)
+
+
+_jinja_env.globals.setdefault("csrf_token", csrf_token)
 _jinja_env.add_extension(jinjax.JinjaX)
 _jinjax_catalog = jinjax.Catalog(jinja_env=_jinja_env)
 _components_dir = Path(settings.vite.TEMPLATE_DIR).parent / "components"

@@ -1,0 +1,15 @@
+{#def method="post", action="", class_name="", hx_post="", hx_target="", hx_swap="", csrf_name="_csrf_token", csrf_input=None #}
+<form
+  method="{{ method }}"
+  action="{{ action }}"
+  class="{{ class_name }}"
+  {% if hx_post %}hx-post="{{ hx_post }}"{% endif %}
+  {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+  {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+  {{ attrs.render() }}
+>
+  {% if method.upper() in ["POST", "PUT", "DELETE", "PATCH"] %}
+    <base.CSRFToken name={{ csrf_name }} csrf_input={{ csrf_input }} />
+  {% endif %}
+  {{ content }}
+</form>

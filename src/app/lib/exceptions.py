@@ -10,15 +10,13 @@ import sys
 from typing import TYPE_CHECKING
 
 from advanced_alchemy.exceptions import IntegrityError
-from litestar.exceptions import (
-    HTTPException,
-    InternalServerException,
-    NotFoundException,
-    PermissionDeniedException,
-)
+from litestar.enums import MediaType
+from litestar.exceptions import HTTPException, InternalServerException, NotFoundException, PermissionDeniedException
 from litestar.exceptions.responses import create_debug_response, create_exception_response
 from litestar.repository.exceptions import ConflictError, NotFoundError, RepositoryError
+from litestar.response import Response
 from litestar.status_codes import HTTP_409_CONFLICT, HTTP_500_INTERNAL_SERVER_ERROR
+from structlog import get_logger
 from structlog.contextvars import bind_contextvars
 
 if TYPE_CHECKING:
@@ -26,7 +24,6 @@ if TYPE_CHECKING:
 
     from litestar.connection import Request
     from litestar.middleware.exceptions.middleware import ExceptionResponseContent
-    from litestar.response import Response
     from litestar.types import Scope
 
 __all__ = (
@@ -34,6 +31,7 @@ __all__ = (
     "AuthorizationError",
     "HealthCheckConfigurationError",
     "after_exception_hook_handler",
+    "csrf_exception_handler",
 )
 
 
@@ -134,3 +132,39 @@ def exception_to_http_response(
     if request.app.debug and http_exc not in (PermissionDeniedException, NotFoundError, AuthorizationError):
         return create_debug_response(request, exc)
     return create_exception_response(request, http_exc(detail=str(exc.__cause__)))
+
+
+def csrf_exception_handler(
+    request: Request[Any, Any, Any],
+    exc: PermissionDeniedException,
+) -> Response[ExceptionResponseContent]:
+    detail = str(exc.detail or exc)
+    if "csrf" not in detail.lower():
+        return create_exception_response(request, exc)
+
+    csrf_config = request.app.csrf_config
+    header_name = csrf_config.header_name if csrf_config else "X-XSRF-TOKEN"
+    cookie_name = csrf_config.cookie_name if csrf_config else "XSRF-TOKEN"
+    logger = get_logger()
+    logger.warning(
+        "CSRF validation failed",
+        path=request.url.path,
+        method=request.method,
+        csrf_header=_obfuscate_value(request.headers.get(header_name)),
+        csrf_cookie=_obfuscate_value(request.cookies.get(cookie_name)),
+        htmx=bool(request.headers.get("HX-Request")),
+    )
+    message = "CSRF validation failed. Please refresh the page and try again."
+    return Response(
+        content=message,
+        media_type=MediaType.TEXT,
+        status_code=exc.status_code,
+    )
+
+
+def _obfuscate_value(value: str | None) -> str | None:
+    if not value:
+        return None
+    if len(value) < 6:
+        return "***"
+    return f"{value[:2]}***{value[-2:]}"

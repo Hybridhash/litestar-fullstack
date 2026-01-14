@@ -3,6 +3,7 @@
 <html lang="en" data-theme="litestar" class="min-h-full">
   <head>
     <base.Head title={{ title }} description={{ description }} keywords={{ keywords }} />
+    <base.CSRFToken as_meta={{ True }} />
     {{ vite_hmr() }}
     {{ vite('resources/main.css') }}
   </head>

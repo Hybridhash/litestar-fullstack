@@ -11,6 +11,7 @@
   hx-on::before-request="$el.__x.$data.loading = true"
   hx-on::after-request="$el.__x.$data.loading = false"
 >
+  <base.CSRFToken />
   <forms.TextField label="Email" name="username" type="email" placeholder="you@example.com" required={{ True }} />
   <forms.TextField label="Password" name="password" type="password" placeholder="••••••••" required={{ True }} />
   <ui.Button type="submit" variant="primary" block={{ True }} x-bind:disabled="loading">

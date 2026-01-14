@@ -362,6 +362,8 @@ class AppSettings:
     """Allowed CORS Origins"""
     CSRF_COOKIE_NAME: str = field(default_factory=get_env("CSRF_COOKIE_NAME", "XSRF-TOKEN"))
     """CSRF Cookie Name"""
+    CSRF_HEADER_NAME: str = field(default_factory=get_env("CSRF_HEADER_NAME", "X-XSRF-TOKEN"))
+    """CSRF Header Name"""
     CSRF_COOKIE_SECURE: bool = field(default_factory=get_env("CSRF_COOKIE_SECURE", False))
     """CSRF Secure Cookie"""
     JWT_ENCRYPTION_ALGORITHM: str = field(default_factory=lambda: "HS256")
@@ -395,6 +397,9 @@ class AppSettings:
             else:
                 # Split the string by commas into a list if it is not meant to be a list representation.
                 self.ALLOWED_CORS_ORIGINS = [host.strip() for host in self.ALLOWED_CORS_ORIGINS.split(",")]
+
+        if not self.CSRF_COOKIE_SECURE and self.URL.lower().startswith("https://"):
+            self.CSRF_COOKIE_SECURE = True
 
 
 @dataclass

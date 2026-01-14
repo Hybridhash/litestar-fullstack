@@ -15,8 +15,18 @@ pytestmark = pytest.mark.anyio
         ("inactive@example.com", "Old_Password3!", 403),
     ),
 )
-async def test_user_login(client: AsyncClient, username: str, password: str, expected_status_code: int) -> None:
-    response = await client.post("/api/access/login", data={"username": username, "password": password})
+async def test_user_login(
+    client: AsyncClient,
+    csrf_headers: dict[str, str],
+    username: str,
+    password: str,
+    expected_status_code: int,
+) -> None:
+    response = await client.post(
+        "/api/access/login",
+        data={"username": username, "password": password},
+        headers=csrf_headers,
+    )
     assert response.status_code == expected_status_code
 
 
@@ -24,8 +34,17 @@ async def test_user_login(client: AsyncClient, username: str, password: str, exp
     ("username", "password"),
     (("superuser@example.com", "Test_Password1!"),),
 )
-async def test_user_logout(client: AsyncClient, username: str, password: str) -> None:
-    response = await client.post("/api/access/login", data={"username": username, "password": password})
+async def test_user_logout(
+    client: AsyncClient,
+    csrf_headers: dict[str, str],
+    username: str,
+    password: str,
+) -> None:
+    response = await client.post(
+        "/api/access/login",
+        data={"username": username, "password": password},
+        headers=csrf_headers,
+    )
     assert response.status_code == 201
     cookies = dict(response.cookies)
 
@@ -34,7 +53,7 @@ async def test_user_logout(client: AsyncClient, username: str, password: str) ->
     me_response = await client.get("/api/me")
     assert me_response.status_code == 200
 
-    response = await client.post("/api/access/logout")
+    response = await client.post("/api/access/logout", headers=csrf_headers)
     assert response.status_code == 200
 
     # the user can no longer access the /me route.

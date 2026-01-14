@@ -1,0 +1,10 @@
+{#def name="_csrf_token", as_meta=False, csrf_input=None #}
+{% if as_meta %}
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+{% else %}
+  {% if name == "_csrf_token" and csrf_input %}
+    {{ csrf_input | safe }}
+  {% else %}
+    <input type="hidden" name="{{ name }}" value="{{ csrf_token() }}">
+  {% endif %}
+{% endif %}

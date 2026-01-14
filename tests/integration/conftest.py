@@ -145,6 +145,14 @@ def fx_superuser_token_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {auth.create_token(identifier='superuser@example.com')}"}
 
 
+@pytest.fixture(name="csrf_headers")
+async def fx_csrf_headers(client: AsyncClient) -> dict[str, str]:
+    response = await client.get("/")
+    token = response.cookies.get(config.csrf.cookie_name)
+    assert token is not None
+    return {config.csrf.header_name: token}
+
+
 @pytest.fixture(name="user_token_headers")
 def fx_user_token_headers() -> dict[str, str]:
     """Valid user token.

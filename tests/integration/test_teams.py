@@ -8,40 +8,55 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.anyio
 
 
-async def test_teams_with_no_auth(client: "AsyncClient") -> None:
-    response = await client.patch("/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b", json={"name": "TEST UPDATE"})
+async def test_teams_with_no_auth(client: "AsyncClient", csrf_headers: dict[str, str]) -> None:
+    response = await client.patch(
+        "/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b",
+        json={"name": "TEST UPDATE"},
+        headers=csrf_headers,
+    )
     assert response.status_code == 401
     response = await client.post(
         "/api/teams/",
         json={"name": "A User", "email": "new-user@example.com", "password": "S3cret!"},
+        headers=csrf_headers,
     )
     assert response.status_code == 401
     response = await client.get("/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b")
     assert response.status_code == 401
     response = await client.get("/api/teams")
     assert response.status_code == 401
-    response = await client.delete("/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b")
+    response = await client.delete(
+        "/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b",
+        headers=csrf_headers,
+    )
     assert response.status_code == 401
 
 
-async def test_teams_with_incorrect_role(client: "AsyncClient", user_token_headers: dict[str, str]) -> None:
+async def test_teams_with_incorrect_role(
+    client: "AsyncClient",
+    csrf_headers: dict[str, str],
+    user_token_headers: dict[str, str],
+) -> None:
     response = await client.patch(
         "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999",
         json={"name": "TEST UPDATE"},
-        headers=user_token_headers,
+        headers={**csrf_headers, **user_token_headers},
     )
     assert response.status_code == 403
     response = await client.post(
         "/api/teams/",
         json={"name": "A new team."},
-        headers=user_token_headers,
+        headers={**csrf_headers, **user_token_headers},
     )
     assert response.status_code == 201
     response = await client.get("/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999", headers=user_token_headers)
     assert response.status_code == 403
     response = await client.get("/api/teams", headers=user_token_headers)
     assert response.status_code == 200
-    response = await client.delete("/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999", headers=user_token_headers)
+    response = await client.delete(
+        "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999",
+        headers={**csrf_headers, **user_token_headers},
+    )
     assert response.status_code == 403
 
 
@@ -57,28 +72,40 @@ async def test_teams_get(client: "AsyncClient", superuser_token_headers: dict[st
     assert response.json()["name"] == "Test Team"
 
 
-async def test_teams_create(client: "AsyncClient", superuser_token_headers: dict[str, str]) -> None:
+async def test_teams_create(
+    client: "AsyncClient",
+    csrf_headers: dict[str, str],
+    superuser_token_headers: dict[str, str],
+) -> None:
     response = await client.post(
         "/api/teams/",
         json={"name": "My First Team", "tags": ["cool tag"]},
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
     )
     assert response.status_code == 201
 
 
-async def test_teams_update(client: "AsyncClient", superuser_token_headers: dict[str, str]) -> None:
+async def test_teams_update(
+    client: "AsyncClient",
+    csrf_headers: dict[str, str],
+    superuser_token_headers: dict[str, str],
+) -> None:
     response = await client.patch(
         "/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b",
         json={"name": "Name Changed"},
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
     )
     assert response.status_code == 200
 
 
-async def test_teams_delete(client: "AsyncClient", superuser_token_headers: dict[str, str]) -> None:
+async def test_teams_delete(
+    client: "AsyncClient",
+    csrf_headers: dict[str, str],
+    superuser_token_headers: dict[str, str],
+) -> None:
     response = await client.delete(
         "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999",
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
     )
     assert response.status_code == 204
     # ensure we didn't cascade delete the users that were members of the team
@@ -89,10 +116,14 @@ async def test_teams_delete(client: "AsyncClient", superuser_token_headers: dict
     assert response.status_code == 200
 
 
-async def test_teams_add_remove_member(client: "AsyncClient", superuser_token_headers: dict[str, str]) -> None:
+async def test_teams_add_remove_member(
+    client: "AsyncClient",
+    csrf_headers: dict[str, str],
+    superuser_token_headers: dict[str, str],
+) -> None:
     response = await client.post(
         "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999/members/add",
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
         json={"userName": "user@example.com"},
     )
     assert response.status_code == 201
@@ -100,7 +131,7 @@ async def test_teams_add_remove_member(client: "AsyncClient", superuser_token_he
 
     response = await client.post(
         "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999/members/remove",
-        headers=superuser_token_headers,
+        headers={**csrf_headers, **superuser_token_headers},
         json={"userName": "user@example.com"},
     )
     assert response.status_code == 201
