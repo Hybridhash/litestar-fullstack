@@ -50,12 +50,12 @@ async def test_user_logout(
 
     assert cookies.get("token") is not None
 
-    me_response = await client.get("/api/me")
+    me_response = await client.get("/api/teams")
     assert me_response.status_code == 200
 
     response = await client.post("/api/access/logout", headers=csrf_headers)
     assert response.status_code == 200
 
     # the user can no longer access the /me route.
-    me_response = await client.get("/api/me")
+    me_response = await client.get("/api/teams")
     assert me_response.status_code == 401

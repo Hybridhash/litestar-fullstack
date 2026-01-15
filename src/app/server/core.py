@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from litestar.config.response_cache import (ResponseCacheConfig,
-                                            default_cache_key_builder)
+from litestar.config.response_cache import ResponseCacheConfig, default_cache_key_builder
 from litestar.di import Provide
 from litestar.openapi.config import OpenAPIConfig
 from litestar.openapi.plugins import ScalarRenderPlugin
@@ -55,41 +54,37 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
 
         from uuid import UUID  # noqa: PLC0415
 
-        from advanced_alchemy.exceptions import \
-            RepositoryError  # noqa: PLC0415
+        from advanced_alchemy.exceptions import RepositoryError  # noqa: PLC0415
         from litestar.enums import RequestEncodingType  # noqa: PLC0415
-        from litestar.exceptions import \
-            PermissionDeniedException  # noqa: PLC0415
+        from litestar.exceptions import PermissionDeniedException  # noqa: PLC0415
         from litestar.params import Body  # noqa: PLC0415
         from litestar.security.jwt import Token  # noqa: PLC0415
 
-        from app.__about__ import \
-            __version__ as current_version  # noqa: PLC0415
+        from app.__about__ import __version__ as current_version  # noqa: PLC0415
         from app.config import app as config  # noqa: PLC0415
         from app.config import constants, get_settings  # noqa: PLC0415
         from app.db import models as m  # noqa: PLC0415
-        from app.domain.accounts import \
-            signals as account_signals  # noqa: PLC0415
+        from app.domain.accounts import signals as account_signals  # noqa: PLC0415
         from app.domain.accounts.controllers import (  # noqa: PLC0415
-            AccessController, UserController, UserRoleController)
+            AccessController,
+            UserController,
+            UserRoleController,
+        )
         from app.domain.accounts.deps import provide_user  # noqa: PLC0415
-        from app.domain.accounts.guards import \
-            auth as jwt_auth  # noqa: PLC0415
-        from app.domain.accounts.services import (RoleService,  # noqa: PLC0415
-                                                  UserService)
-        from app.domain.system.controllers import \
-            SystemController  # noqa: PLC0415
+        from app.domain.accounts.guards import auth as jwt_auth  # noqa: PLC0415
+        from app.domain.accounts.services import RoleService, UserService  # noqa: PLC0415
+        from app.domain.system.controllers import SystemController  # noqa: PLC0415
         from app.domain.tags.controllers import TagController  # noqa: PLC0415
         from app.domain.teams import signals as team_signals  # noqa: PLC0415
-        from app.domain.teams.controllers import (  # noqa: PLC0415
-            TeamController, TeamMemberController)
-        from app.domain.teams.services import (  # noqa: PLC0415
-            TeamMemberService, TeamService)
+        from app.domain.teams.controllers import TeamController, TeamMemberController  # noqa: PLC0415
+        from app.domain.teams.services import TeamMemberService, TeamService  # noqa: PLC0415
         from app.domain.web.controllers import WebController  # noqa: PLC0415
         from app.domain.web.pages import SiteController  # noqa: PLC0415
-        from app.lib.exceptions import (ApplicationError,  # noqa: PLC0415
-                                        csrf_exception_handler,
-                                        exception_to_http_response)
+        from app.lib.exceptions import (  # noqa: PLC0415
+            ApplicationError,
+            csrf_exception_handler,
+            exception_to_http_response,
+        )
         from app.server import plugins  # noqa: PLC0415
 
         settings = get_settings()

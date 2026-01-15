@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from advanced_alchemy.service import ModelDictT, is_dict
 
-from app.db import models as m
+if TYPE_CHECKING:
+    from app.db import models as m
 from app.domain.sanitize.sanitize_base import clean_text
 
 

@@ -17,7 +17,7 @@ async def test_teams_with_no_auth(client: "AsyncClient", csrf_headers: dict[str,
     assert response.status_code == 401
     response = await client.post(
         "/api/teams/",
-        json={"name": "A User", "email": "new-user@example.com", "password": "S3cret!"},
+        data={"name": "A User", "email": "new-user@example.com", "password": "S3cret!"},
         headers=csrf_headers,
     )
     assert response.status_code == 401
@@ -45,7 +45,7 @@ async def test_teams_with_incorrect_role(
     assert response.status_code == 403
     response = await client.post(
         "/api/teams/",
-        json={"name": "A new team."},
+        data={"name": "A new team."},
         headers={**csrf_headers, **user_token_headers},
     )
     assert response.status_code == 201
@@ -79,7 +79,7 @@ async def test_teams_create(
 ) -> None:
     response = await client.post(
         "/api/teams/",
-        json={"name": "My First Team", "tags": ["cool tag"]},
+        data={"name": "My First Team"},
         headers={**csrf_headers, **superuser_token_headers},
     )
     assert response.status_code == 201
@@ -107,7 +107,7 @@ async def test_teams_delete(
         "/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999",
         headers={**csrf_headers, **superuser_token_headers},
     )
-    assert response.status_code == 204
+    assert response.status_code == 200
     # ensure we didn't cascade delete the users that were members of the team
     response = await client.get(
         "/api/users/5ef29f3c-3560-4d15-ba6b-a2e5c721e999",

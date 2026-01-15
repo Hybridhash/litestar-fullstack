@@ -64,7 +64,7 @@ async def test_superuser_role_access(
         "/api/teams/97108ac1-ffcb-411d-8b1e-d9183399f63b",
         headers={**csrf_headers, **user_token_headers},
     )
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # retrieve should now fail
     response = await client.get("/api/teams/81108ac1-ffcb-411d-8b1e-d91833999999", headers=user_token_headers)

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 from app.db import models as m
 from app.domain.sanitize.sanitize_base import clean_text

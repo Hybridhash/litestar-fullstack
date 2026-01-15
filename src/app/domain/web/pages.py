@@ -5,11 +5,9 @@ from typing import TYPE_CHECKING
 from litestar import Controller, get
 from litestar.di import Provide
 from litestar.enums import MediaType
-from litestar.plugins.htmx import HTMXRequest
 from litestar.response import Template
 from litestar.status_codes import HTTP_200_OK
 from sqlalchemy import select
-from sqlalchemy.sql.elements import ColumnElement
 
 from app.db import models as m
 from app.db.models.team_member import TeamMember as TeamMemberModel
@@ -20,6 +18,9 @@ from app.domain.web.table_helpers import build_teams_table, build_users_table
 from app.lib.deps import create_service_provider
 
 if TYPE_CHECKING:
+    from litestar.plugins.htmx import HTMXRequest
+    from sqlalchemy.sql.elements import ColumnElement
+
     from app.domain.accounts.services import UserService
 
 
