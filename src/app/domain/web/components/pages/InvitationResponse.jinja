@@ -1,0 +1,18 @@
+{#def invitation=None, team=None, status=None #}
+<section class="space-y-6">
+  <div class="flex flex-col gap-2">
+    <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Invitation</p>
+    <h1 class="text-3xl font-semibold">Respond to invitation</h1>
+    <p class="max-w-2xl text-base-content/70">
+      Accept or decline your team invitation.
+    </p>
+  </div>
+
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body gap-4">
+      <div id="invitation-response-panel">
+        {% include "partials/invitation_response_panel.jinja" %}
+      </div>
+    </div>
+  </div>
+</section>

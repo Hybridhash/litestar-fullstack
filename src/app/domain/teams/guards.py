@@ -20,7 +20,7 @@ def requires_team_membership(connection: ASGIConnection, _: BaseRouteHandler) ->
     Raises:
         PermissionDeniedException: _description_
     """
-    team_id = connection.path_params["team_id"]
+    team_id = UUID(str(connection.path_params["team_id"]))
     has_system_role = any(
         assigned_role.role_name
         for assigned_role in connection.user.roles
@@ -42,7 +42,7 @@ def requires_team_admin(connection: ASGIConnection, _: BaseRouteHandler) -> None
     Raises:
         PermissionDeniedException: _description_
     """
-    team_id = connection.path_params["team_id"]
+    team_id = UUID(str(connection.path_params["team_id"]))
     has_system_role = any(
         assigned_role.role_name
         for assigned_role in connection.user.roles

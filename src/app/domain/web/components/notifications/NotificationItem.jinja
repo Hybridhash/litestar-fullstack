@@ -1,0 +1,43 @@
+{#def notification={} #}
+{% set status_value = (notification.status or "") | string | lower %}
+{% set status_class = "status status-ghost" %}
+{% if status_value == "pending" %}
+  {% set status_class = "status status-warning" %}
+{% elif status_value == "accepted" %}
+  {% set status_class = "status status-success" %}
+{% elif status_value == "declined" %}
+  {% set status_class = "status status-error" %}
+{% endif %}
+
+<div class="flex items-start gap-3">
+  <span class="{{ status_class }} mt-1"></span>
+  <div class="flex-1 space-y-2">
+    <div class="flex items-center justify-between gap-3">
+      <div class="text-sm font-semibold">{{ notification.title }}</div>
+      <span class="text-xs text-base-content/60 capitalize">{{ status_value or "new" }}</span>
+    </div>
+    <p class="text-xs text-base-content/70">{{ notification.description }}</p>
+    {% if notification.type == "invitation" %}
+      <div class="flex flex-wrap items-center gap-2">
+        <form
+          method="post"
+          action="{{ notification.accept_url }}"
+          hx-post="{{ notification.accept_url }}"
+          hx-target="#notifications-shell"
+          hx-swap="innerHTML"
+        >
+          <ui.Button label="Accept" type="submit" size="xs" variant="primary" />
+        </form>
+        <form
+          method="post"
+          action="{{ notification.decline_url }}"
+          hx-post="{{ notification.decline_url }}"
+          hx-target="#notifications-shell"
+          hx-swap="innerHTML"
+        >
+          <ui.Button label="Decline" type="submit" size="xs" variant="ghost" class_name="text-error" />
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,33 @@
+{#def
+  headers=[],
+  striped=True,
+  rows=None,
+  table_type=None,
+  context={},
+  fragment_id=None,
+  wrapper_class="",
+  table_class=""
+#}
+<div
+  class="overflow-x-auto rounded-box border border-base-300 bg-base-100 {{ wrapper_class }}"
+  {% if fragment_id %}data-fragment="{{ fragment_id }}"{% endif %}
+>
+  <table class="table w-full {{ 'table-zebra' if striped }} {{ table_class }}">
+    <thead>
+      <tr>
+        {% for header in headers %}
+          <th>{{ header }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% if rows and table_type %}
+        {% for row in rows %}
+          <tables.TableRowRenderer row={{ row }} table_type={{ table_type }} context={{ context }} />
+        {% endfor %}
+      {% else %}
+        {{ content }}
+      {% endif %}
+    </tbody>
+  </table>
+</div>

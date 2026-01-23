@@ -1,50 +1,10 @@
-<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
-  <table class="table w-full table-zebra">
-    <thead>
-      <tr>
-        {% for header in headers %}
-          <th>{{ header }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% if rows %}
-        {% for row in rows %}
-          <tr>
-            <td>{{ row.name }}</td>
-            <td>{{ row.email }}</td>
-            <td>{{ row.status }}</td>
-            <td>{{ row.role }}</td>
-            <td>
-              <button
-                class="btn btn-ghost btn-xs text-error"
-                hx-delete="/api/users/{{ row.id }}"
-                hx-target="#users-table"
-                hx-swap="innerHTML"
-                hx-confirm="Remove {{ row.email }}?"
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        {% endfor %}
-      {% else %}
-        <tr>
-          <td class="py-6 text-center text-sm text-base-content/60" colspan="{{ headers|length }}">
-            No records found.
-          </td>
-        </tr>
-      {% endif %}
-    </tbody>
-  </table>
-</div>
-{% if next_page %}
-  <div
-    class="mt-4 text-center text-sm text-base-content/60"
-    hx-get="/api/users?page={{ next_page }}&q={{ query }}&filter_by={{ filter_by }}&sort={{ sort }}&order={{ order }}"
-    hx-trigger="revealed"
-    hx-swap="afterend"
-  >
-    Loading more users...
-  </div>
-{% endif %}
+{% set pagination_query = {"q": query, "filter_by": filter_by, "sort": sort, "order": order} %}
+<tables.DataTable
+  headers={{ headers }}
+  rows={{ rows }}
+  table_type="users"
+  next_page={{ next_page }}
+  pagination_url="/api/users"
+  pagination_query={{ pagination_query }}
+  loading_message="Loading more users..."
+/>

@@ -1,4 +1,4 @@
-{#def id, title="", open=False #}
+{#def id, title="", open=False, close_label="Close", actions=None #}
 <div x-data="{ open: {{ 'true' if open else 'false' }} }">
   <dialog id="{{ id }}" class="modal" :open="open">
     <div class="modal-box">
@@ -9,9 +9,13 @@
         {{ content }}
       </div>
       <div class="modal-action">
-        <form method="dialog">
-          <button class="btn">Close</button>
-        </form>
+        {% if actions %}
+          {{ actions }}
+        {% else %}
+          <form method="dialog">
+            <button class="btn">{{ close_label }}</button>
+          </form>
+        {% endif %}
       </div>
     </div>
   </dialog>

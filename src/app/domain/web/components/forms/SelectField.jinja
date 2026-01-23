@@ -1,0 +1,20 @@
+{#def label, name, options, value="", required=False, error="" #}
+<label class="form-control w-full">
+  <div class="label">
+    <span class="label-text">{{ label }}</span>
+  </div>
+  <select class="select select-bordered w-full" name="{{ name }}" {{ "required" if required }} {{ attrs.render() }}>
+    {% for option in options %}
+      {% set option_value = option.value if option.value is defined else option[0] %}
+      {% set option_label = option.label if option.label is defined else option[1] %}
+      <option value="{{ option_value }}" {{ "selected" if option_value == value }}>
+        {{ option_label }}
+      </option>
+    {% endfor %}
+  </select>
+  {% if error %}
+    <div class="label">
+      <span class="label-text-alt text-error">{{ error }}</span>
+    </div>
+  {% endif %}
+</label>

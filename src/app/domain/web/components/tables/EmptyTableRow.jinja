@@ -1,0 +1,10 @@
+{#def message="No records found.", colspan=None, headers=[] #}
+{% set resolved_colspan = colspan if colspan is not none else headers|length %}
+{% if resolved_colspan < 1 %}
+  {% set resolved_colspan = 1 %}
+{% endif %}
+<tr>
+  <td class="py-6 text-center text-sm text-base-content/60" colspan="{{ resolved_colspan }}">
+    {{ message }}
+  </td>
+</tr>

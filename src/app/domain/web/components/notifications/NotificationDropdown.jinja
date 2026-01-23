@@ -1,0 +1,24 @@
+{#def notifications=[], notification_count=0 #}
+<button type="button" class="btn btn-ghost btn-circle" tabindex="0" aria-label="Notifications">
+  <div class="indicator">
+    {% if notification_count > 0 %}
+      <span class="indicator-item badge badge-primary badge-xs">{{ notification_count }}</span>
+    {% endif %}
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9" />
+    </svg>
+  </div>
+</button>
+<div tabindex="0" class="dropdown-content z-[60] mt-3 w-96">
+  <div class="card bg-base-100 shadow-xl hover-3d">
+    <div class="card-body gap-3">
+      <div class="flex items-center justify-between">
+        <h3 class="card-title text-lg">Notifications</h3>
+        <span class="text-xs text-base-content/60">{{ notification_count }} total</span>
+      </div>
+      <div id="notifications-list">
+        <notifications.NotificationList notifications={{ notifications }} />
+      </div>
+    </div>
+  </div>
+</div>

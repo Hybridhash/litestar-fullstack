@@ -1,0 +1,73 @@
+{#def team=None, team_id="", invitation_total=0, query="" #}
+<section class="space-y-6">
+  <div class="flex flex-col gap-2">
+    <p class="text-sm uppercase tracking-[0.2em] text-base-content/50">Team</p>
+    <h1 class="text-3xl font-semibold">Invitations</h1>
+    <p class="max-w-2xl text-base-content/70">
+      Manage invitations for {{ team.name if team else "this team" }}.
+    </p>
+  </div>
+
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div class="space-y-3">
+          <div class="text-sm text-base-content/60">{{ invitation_total }} invitations</div>
+          <form
+            class="flex w-full max-w-md gap-2"
+            hx-get="/api/teams/{{ team_id }}/invitations"
+            hx-target="#team-invitations-table"
+          >
+            <input
+              name="q"
+              value="{{ query }}"
+              placeholder="Search by email"
+              class="input input-bordered w-full"
+              type="search"
+            />
+            <button class="btn btn-secondary" type="submit">Apply</button>
+          </form>
+          <div id="team-invitations-feedback"></div>
+        </div>
+        <div class="card w-full max-w-sm bg-base-200/60">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Send invitation</h3>
+            <!-- HTMX events keep Alpine's loading state in sync with the request. -->
+            <form
+              class="space-y-3"
+              x-data="{ loading: false }"
+              hx-post="/api/teams/{{ team_id }}/invitations"
+              hx-target="#team-invitations-table"
+              hx-swap="innerHTML"
+              hx-on::before-request="$el.__x.$data.loading = true"
+              hx-on::after-request="$el.__x.$data.loading = false; if (event.detail.successful) { $el.reset() }"
+            >
+              <forms.TextField
+                label="Email"
+                name="email"
+                type="email"
+                placeholder="person@example.com"
+                required={{ True }}
+              />
+              <forms.SelectField
+                label="Role"
+                name="role"
+                options={{ [
+                  {"value": "MEMBER", "label": "Member"},
+                  {"value": "ADMIN", "label": "Admin"}
+                ] }}
+              />
+              <button class="btn btn-secondary btn-block" type="submit" :disabled="loading">
+                <span x-show="!loading">Send invite</span>
+                <span x-show="loading">Sending...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div id="team-invitations-table" hx-get="/api/teams/{{ team_id }}/invitations" hx-trigger="load" hx-swap="innerHTML">
+        <div class="skeleton h-32 w-full"></div>
+      </div>
+    </div>
+  </div>
+</section>

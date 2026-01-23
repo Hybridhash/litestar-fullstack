@@ -1,0 +1,8 @@
+{% set table_context = {"team_id": team_id} %}
+<tables.DataTable
+  headers={{ headers }}
+  rows={{ rows }}
+  table_type="team_invitations"
+  context={{ table_context }}
+  fragment_id="team-invitations"
+/>

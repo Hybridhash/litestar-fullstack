@@ -1,5 +1,11 @@
 {% if message %}
-  <div class="alert alert-error">
-    <span>{{ message }}</span>
+  {% set resolved_variant = variant if variant in ["success", "error", "warning", "info"] else "error" %}
+  <div class="alert alert-{{ resolved_variant }}">
+    <div>
+      {% if title %}
+        <h3 class="font-semibold">{{ title }}</h3>
+      {% endif %}
+      <span>{{ message }}</span>
+    </div>
   </div>
 {% endif %}

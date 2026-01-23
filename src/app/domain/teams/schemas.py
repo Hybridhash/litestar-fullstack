@@ -31,6 +31,15 @@ class Team(CamelizedBaseStruct):
     tags: list[TeamTag] = []
 
 
+class TeamInvitation(CamelizedBaseStruct):
+    id: UUID
+    team_id: UUID
+    email: str
+    role: TeamRoles | None = TeamRoles.MEMBER
+    is_accepted: bool = False
+    invited_by_email: str | None = None
+
+
 class TeamCreate(CamelizedBaseStruct):
     name: str
     description: str | None = None
@@ -47,3 +56,17 @@ class TeamMemberModify(CamelizedBaseStruct):
     """Team Member Modify."""
 
     user_name: str
+    role: TeamRoles | None = None
+
+
+class TeamMemberUpdate(CamelizedBaseStruct):
+    """Team Member Update."""
+
+    role: TeamRoles
+
+
+class TeamInvitationCreate(CamelizedBaseStruct):
+    """Team Invitation Create."""
+
+    email: str
+    role: TeamRoles | None = TeamRoles.MEMBER

@@ -155,6 +155,23 @@
     </ul>
   </div>
   <div class="navbar-end gap-2">
+    <div
+      id="notifications-shell"
+      class="dropdown dropdown-end"
+      hx-get="/notifications"
+      hx-trigger="load"
+      hx-target="#notifications-shell"
+      hx-swap="innerHTML"
+    >
+      <button type="button" class="btn btn-ghost btn-circle" tabindex="0" aria-label="Notifications">
+        <div class="indicator">
+          <span class="indicator-item badge badge-ghost badge-xs">0</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9" />
+          </svg>
+        </div>
+      </button>
+    </div>
     <div class="hidden text-sm text-base-content/70 md:block">{{ user_email }}</div>
     <form method="post" action="/api/access/logout" hx-post="/api/access/logout" hx-swap="none">
       <button type="submit" class="btn btn-ghost">Logout</button>

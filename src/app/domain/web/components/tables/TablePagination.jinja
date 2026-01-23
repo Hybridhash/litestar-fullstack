@@ -1,0 +1,22 @@
+{#def next_page=None, url="", query_params={}, loading_message="Loading more...", swap="afterend" #}
+{% if next_page %}
+  {% set params = namespace(parts=[]) %}
+  {% for key, value in query_params.items() %}
+    {% if value is not none %}
+      {% set _ = params.parts.append(key ~ "=" ~ value) %}
+    {% endif %}
+  {% endfor %}
+  {% set query_string = params.parts | join("&") %}
+  {% set full_url = url ~ "?page=" ~ next_page %}
+  {% if query_string %}
+    {% set full_url = full_url ~ "&" ~ query_string %}
+  {% endif %}
+  <div
+    class="mt-4 text-center text-sm text-base-content/60"
+    hx-get="{{ full_url }}"
+    hx-trigger="revealed"
+    hx-swap="{{ swap }}"
+  >
+    {{ loading_message }}
+  </div>
+{% endif %}

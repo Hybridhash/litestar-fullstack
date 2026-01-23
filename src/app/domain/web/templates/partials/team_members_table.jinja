@@ -1,0 +1,13 @@
+{% set table_context = {"team_id": team_id} %}
+{% set pagination_query = {"q": query} %}
+<tables.DataTable
+  headers={{ headers }}
+  rows={{ rows }}
+  table_type="team_members"
+  context={{ table_context }}
+  fragment_id="team-members"
+  next_page={{ next_page }}
+  pagination_url="/api/teams/{{ team_id }}/members"
+  pagination_query={{ pagination_query }}
+  loading_message="Loading more members..."
+/>

@@ -4,10 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID  # noqa: TC003
 
-from advanced_alchemy.repository import (
-    SQLAlchemyAsyncRepository,
-    SQLAlchemyAsyncSlugRepository,
-)
+from advanced_alchemy.repository import SQLAlchemyAsyncRepository, SQLAlchemyAsyncSlugRepository
 from advanced_alchemy.service import (
     ModelDictT,
     SQLAlchemyAsyncRepositoryService,
@@ -17,6 +14,7 @@ from advanced_alchemy.service import (
     schema_dump,
 )
 from litestar.exceptions import PermissionDeniedException
+from sqlalchemy.orm import undefer
 
 from app.config import constants
 from app.db import models as m
@@ -47,7 +45,8 @@ class UserService(SQLAlchemyAsyncRepositoryService[m.User]):
 
     async def authenticate(self, username: str, password: bytes | str) -> m.User:
         """Authenticate a user against the stored hashed password."""
-        db_obj = await self.get_one_or_none(email=username)
+        # Explicitly load hashed_password for authentication
+        db_obj = await self.get_one_or_none(email=username, load=[undefer(m.User.hashed_password)])
         if db_obj is None:
             msg = "User not found or password invalid"
             raise PermissionDeniedException(detail=msg)
@@ -64,6 +63,9 @@ class UserService(SQLAlchemyAsyncRepositoryService[m.User]):
 
     async def update_password(self, data: dict[str, Any], db_obj: m.User) -> None:
         """Modify stored user password."""
+        # Reload with hashed_password if not already loaded
+        if not hasattr(db_obj, "hashed_password") or db_obj.hashed_password is None:
+            db_obj = await self.get(db_obj.id, load=[undefer(m.User.hashed_password)])
         if db_obj.hashed_password is None:
             msg = "User not found or password invalid."
             raise PermissionDeniedException(detail=msg)

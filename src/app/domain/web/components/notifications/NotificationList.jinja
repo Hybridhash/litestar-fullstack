@@ -1,0 +1,12 @@
+{#def notifications=[] #}
+<ul class="list">
+  {% if notifications %}
+    {% for notification in notifications %}
+      <li class="list-row">
+        <notifications.NotificationItem notification={{ notification }} />
+      </li>
+    {% endfor %}
+  {% else %}
+    <li class="list-row text-sm text-base-content/60">No notifications right now.</li>
+  {% endif %}
+</ul>

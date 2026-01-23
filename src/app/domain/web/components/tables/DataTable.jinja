@@ -1,0 +1,59 @@
+{#def
+  headers=[],
+  rows=[],
+  table_type=None,
+  context={},
+  striped=True,
+  fragment_id=None,
+  empty_message="No records found.",
+  next_page=None,
+  pagination_url="",
+  pagination_query={},
+  loading_message="Loading more...",
+  pagination_swap="afterend",
+  wrapper_class="",
+  table_class=""
+#}
+{% set has_content = content | trim %}
+{% set has_rows = rows and rows | length > 0 %}
+
+{% if has_content %}
+  <tables.Table
+    headers={{ headers }}
+    striped={{ striped }}
+    fragment_id={{ fragment_id }}
+    wrapper_class={{ wrapper_class }}
+    table_class={{ table_class }}
+  >
+    {{ content }}
+  </tables.Table>
+{% elif has_rows and table_type %}
+  <tables.Table
+    headers={{ headers }}
+    striped={{ striped }}
+    rows={{ rows }}
+    table_type={{ table_type }}
+    context={{ context }}
+    fragment_id={{ fragment_id }}
+    wrapper_class={{ wrapper_class }}
+    table_class={{ table_class }}
+  />
+{% else %}
+  <tables.Table
+    headers={{ headers }}
+    striped={{ striped }}
+    fragment_id={{ fragment_id }}
+    wrapper_class={{ wrapper_class }}
+    table_class={{ table_class }}
+  >
+    <tables.EmptyTableRow message="{{ empty_message }}" headers={{ headers }} />
+  </tables.Table>
+{% endif %}
+
+<tables.TablePagination
+  next_page={{ next_page }}
+  url={{ pagination_url }}
+  query_params={{ pagination_query }}
+  loading_message={{ loading_message }}
+  swap={{ pagination_swap }}
+/>

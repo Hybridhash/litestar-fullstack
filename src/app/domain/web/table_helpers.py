@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, TypeVar
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-from app.db import models as m
+    from app.db import models as m
+
 from app.domain.sanitize.sanitize_base import clean_text
 
-TableModel = TypeVar("TableModel", m.User, m.Team)
+TableModel = TypeVar("TableModel")
 
 ALLOWED_USER_FILTERS = {"all", "name", "email", "role", "status"}
 ALLOWED_USER_SORT = {"name", "email", "status", "role"}
@@ -187,4 +188,91 @@ def build_teams_table(
         "filter_by": filter_by,
         "sort": sort,
         "order": order,
+    }
+
+
+def build_team_members_table(
+    members: Sequence[m.TeamMember],
+    *,
+    query: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+) -> dict[str, object]:
+    cleaned_query = _clean_text(query)
+    if cleaned_query:
+        query_lower = cleaned_query.lower()
+
+        def matches_query(member: m.TeamMember) -> bool:
+            user = getattr(member, "user", None)
+            name_value = (getattr(user, "name", "") or "").lower()
+            email_value = (getattr(user, "email", "") or getattr(member, "email", "") or "").lower()
+            role_value = (getattr(member, "role", "") or "").lower()
+            return query_lower in name_value or query_lower in email_value or query_lower in role_value
+
+        members = [member for member in members if matches_query(member)]
+
+    page_members, next_page = _paginate(list(members), page, page_size)
+    rows = []
+    for member in page_members:
+        user = getattr(member, "user", None)
+        safe_name = _clean_text(getattr(user, "name", None)) or "—"
+        safe_email = _clean_text(getattr(user, "email", None) or getattr(member, "email", None))
+        role_value = getattr(member, "role", None)
+        role_text = getattr(role_value, "value", role_value)
+        safe_role = _clean_text(role_text) or "Member"
+        rows.append(
+            {
+                "name": safe_name,
+                "email": safe_email,
+                "role": safe_role,
+                "id": str(member.id),
+                "user_id": str(getattr(member, "user_id", "")),
+                "is_owner": bool(getattr(member, "is_owner", False)),
+            },
+        )
+    headers = ["Name", "Email", "Role", "Actions"]
+    return {
+        "headers": headers,
+        "rows": rows,
+        "query": cleaned_query,
+        "total": len(members),
+        "next_page": next_page,
+    }
+
+
+def build_team_invitations_table(
+    invitations: Sequence[m.TeamInvitation],
+    *,
+    query: str | None = None,
+) -> dict[str, object]:
+    cleaned_query = _clean_text(query)
+    if cleaned_query:
+        query_lower = cleaned_query.lower()
+
+        def matches_query(invite: m.TeamInvitation) -> bool:
+            email_value = (getattr(invite, "email", "") or "").lower()
+            role_value = (getattr(invite, "role", "") or "").lower()
+            return query_lower in email_value or query_lower in role_value
+
+        invitations = [invite for invite in invitations if matches_query(invite)]
+
+    rows = []
+    for invite in invitations:
+        role_value = getattr(invite, "role", None)
+        role_text = getattr(role_value, "value", role_value)
+        safe_role = _clean_text(role_text) or "Member"
+        rows.append(
+            {
+                "email": _clean_text(invite.email),
+                "role": safe_role,
+                "status": "Accepted" if invite.is_accepted else "Pending",
+                "id": str(invite.id),
+            },
+        )
+    headers = ["Email", "Role", "Status", "Actions"]
+    return {
+        "headers": headers,
+        "rows": rows,
+        "query": cleaned_query,
+        "total": len(invitations),
     }

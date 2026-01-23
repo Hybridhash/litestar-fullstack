@@ -1,10 +1,31 @@
-{#def label="", variant="primary", size="md", outline=False, block=False, type="button", disabled=False #}
-<button
-  type="{{ type }}"
-  class="btn {{ 'btn-' + variant if variant else '' }} {{ 'btn-' + size if size else '' }} {{ 'btn-outline' if outline }} {{ 'btn-block' if block }}"
-  {{ "disabled" if disabled }}
-  {{ attrs }}
->
-  {{ label }}
-  {{ content }}
-</button>
+{#def
+  label="",
+  variant="primary",
+  size="md",
+  outline=False,
+  block=False,
+  type="button",
+  disabled=False,
+  context=None,
+  class_name="",
+  visible=True
+#}
+{% if visible %}
+  {% set resolved_variant = variant %}
+  {% set resolved_size = size %}
+  {% if context == "table" and (not variant or variant == "primary") %}
+    {% set resolved_variant = "ghost" %}
+  {% endif %}
+  {% if context == "table" and (not size or size == "md") %}
+    {% set resolved_size = "xs" %}
+  {% endif %}
+  <button
+    type="{{ type }}"
+    class="btn {{ 'btn-' + resolved_variant if resolved_variant else '' }} {{ 'btn-' + resolved_size if resolved_size else '' }} {{ 'btn-outline' if outline }} {{ 'btn-block' if block }} {{ class_name }}"
+    {{ "disabled" if disabled }}
+    {{ attrs.render() }}
+  >
+    {{ label }}
+    {{ content }}
+  </button>
+{% endif %}

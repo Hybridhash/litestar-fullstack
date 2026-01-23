@@ -1,0 +1,36 @@
+{#def status="", type="default" #}
+{% set raw_status = status or "" %}
+{% set normalized = raw_status|string|lower %}
+{% set label = raw_status %}
+{% set variant = "badge-ghost" %}
+
+{% if type == "invitation" %}
+  {% if normalized == "accepted" %}
+    {% set variant = "badge-success" %}
+    {% set label = "Accepted" %}
+  {% elif normalized == "pending" %}
+    {% set variant = "badge-ghost" %}
+    {% set label = "Pending" %}
+  {% endif %}
+{% elif type in ["member", "role"] %}
+  {% if normalized == "owner" %}
+    {% set variant = "badge-secondary" %}
+    {% set label = "Owner" %}
+  {% elif normalized == "admin" %}
+    {% set variant = "badge-primary" %}
+    {% set label = "Admin" %}
+  {% elif normalized == "member" %}
+    {% set variant = "badge-ghost" %}
+    {% set label = "Member" %}
+  {% endif %}
+{% else %}
+  {% if normalized == "active" %}
+    {% set variant = "badge-success" %}
+    {% set label = "Active" %}
+  {% elif normalized == "inactive" %}
+    {% set variant = "badge-ghost" %}
+    {% set label = "Inactive" %}
+  {% endif %}
+{% endif %}
+
+<span class="badge {{ variant }}">{{ label }}</span>

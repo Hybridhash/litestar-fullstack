@@ -1,0 +1,90 @@
+{#def invitation=None, team=None, status=None, message=None #}
+{% set invitation = invitation if invitation is defined else none %}
+{% set team = team if team is defined else none %}
+{% set status = status if status is defined else none %}
+{% set message = message if message is defined else none %}
+{% set state = status %}
+{% if not state %}
+  {% if invitation and invitation.is_accepted %}
+    {% set state = "accepted" %}
+  {% elif invitation %}
+    {% set state = "pending" %}
+  {% else %}
+    {% set state = "unavailable" %}
+  {% endif %}
+{% endif %}
+
+{% if message %}
+  <div class="alert alert-error">
+    <span>{{ message }}</span>
+  </div>
+{% endif %}
+
+{% if state == "accepted" %}
+  <div class="space-y-3">
+    <div class="badge badge-success">Accepted</div>
+    <h2 class="text-xl font-semibold">Invitation accepted</h2>
+    <p class="text-sm text-base-content/70">
+      You now have access to {{ team.name if team else "the team" }}.
+    </p>
+    {% if invitation %}
+      <a class="btn btn-primary btn-sm" href="/teams/{{ invitation.team_id }}/members">View team members</a>
+    {% else %}
+      <a class="btn btn-primary btn-sm" href="/teams">View teams</a>
+    {% endif %}
+  </div>
+{% elif state == "declined" %}
+  <div class="space-y-3">
+    <div class="badge badge-ghost">Declined</div>
+    <h2 class="text-xl font-semibold">Invitation declined</h2>
+    <p class="text-sm text-base-content/70">
+      If this was a mistake, ask a team admin to resend an invitation.
+    </p>
+    <a class="btn btn-ghost btn-sm" href="/teams">Back to teams</a>
+  </div>
+{% elif state == "pending" %}
+  {% set role_value = invitation.role if invitation else none %}
+  {% set role_text = role_value.value if role_value is not none and role_value is not string and role_value.value is defined else role_value %}
+  <div class="space-y-4">
+    <div class="space-y-1">
+      <h2 class="text-xl font-semibold">Join {{ team.name if team else "this team" }}</h2>
+      <p class="text-sm text-base-content/70">
+        Invited as {{ role_text if role_text else "Member" }}.
+      </p>
+      {% if invitation %}
+        <p class="text-xs text-base-content/60">Sent to {{ invitation.email }}</p>
+      {% endif %}
+    </div>
+    {% if invitation %}
+      <div class="flex flex-wrap gap-2">
+        <form
+          method="post"
+          action="/api/teams/{{ invitation.team_id }}/invitations/{{ invitation.id }}/accept"
+          hx-post="/api/teams/{{ invitation.team_id }}/invitations/{{ invitation.id }}/accept"
+          hx-target="#invitation-response-panel"
+          hx-swap="innerHTML"
+        >
+          <button class="btn btn-primary" type="submit">Accept invitation</button>
+        </form>
+        <form
+          method="post"
+          action="/api/teams/{{ invitation.team_id }}/invitations/{{ invitation.id }}/decline"
+          hx-post="/api/teams/{{ invitation.team_id }}/invitations/{{ invitation.id }}/decline"
+          hx-target="#invitation-response-panel"
+          hx-swap="innerHTML"
+        >
+          <button class="btn btn-ghost text-error" type="submit">Decline</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="space-y-3">
+    <div class="badge badge-ghost">Unavailable</div>
+    <h2 class="text-xl font-semibold">Invitation unavailable</h2>
+    <p class="text-sm text-base-content/70">
+      This invitation may have been canceled or already answered.
+    </p>
+    <a class="btn btn-ghost btn-sm" href="/teams">Back to teams</a>
+  </div>
+{% endif %}

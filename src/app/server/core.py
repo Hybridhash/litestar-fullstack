@@ -76,7 +76,11 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         from app.domain.system.controllers import SystemController  # noqa: PLC0415
         from app.domain.tags.controllers import TagController  # noqa: PLC0415
         from app.domain.teams import signals as team_signals  # noqa: PLC0415
-        from app.domain.teams.controllers import TeamController, TeamMemberController  # noqa: PLC0415
+        from app.domain.teams.controllers import (  # noqa: PLC0415
+            TeamController,
+            TeamInvitationController,
+            TeamMemberController,
+        )
         from app.domain.teams.services import TeamMemberService, TeamService  # noqa: PLC0415
         from app.domain.web.controllers import WebController  # noqa: PLC0415
         from app.domain.web.pages import SiteController  # noqa: PLC0415
@@ -130,6 +134,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
                 UserController,
                 TeamController,
                 UserRoleController,
+                TeamInvitationController,
                 TeamMemberController,
                 TagController,
                 SiteController,

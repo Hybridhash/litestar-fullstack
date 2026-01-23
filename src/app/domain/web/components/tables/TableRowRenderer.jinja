@@ -1,0 +1,128 @@
+{#def row={}, table_type="", context={} #}
+{% set team_id = context.get("team_id") if context is mapping and context.get("team_id") else "" %}
+
+{% if table_type == "teams" %}
+  <tr>
+    <td>{{ row.name }}</td>
+    <td>{{ row.slug }}</td>
+    <td>{{ row.members }}</td>
+    <td>{{ row.status }}</td>
+    <td>
+      <div class="flex flex-wrap items-center gap-2">
+        <a
+          class="btn btn-ghost btn-xs"
+          href="/teams/{{ row.id }}/members"
+          hx-get="/teams/{{ row.id }}/members"
+          hx-target="#page-shell"
+          hx-select="#page-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+        >
+          Members
+        </a>
+        <a
+          class="btn btn-ghost btn-xs"
+          href="/teams/{{ row.id }}/invitations"
+          hx-get="/teams/{{ row.id }}/invitations"
+          hx-target="#page-shell"
+          hx-select="#page-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+        >
+          Invitations
+        </a>
+        <ui.Button
+          label="Delete"
+          context="table"
+          class_name="text-error"
+          hx-delete={{ "/api/teams/" ~ row.id }}
+          hx-target="#teams-table"
+          hx-swap="innerHTML"
+          hx-confirm={{ "Remove " ~ row.name ~ "?" }}
+        />
+      </div>
+    </td>
+  </tr>
+{% elif table_type == "users" %}
+  <tr>
+    <td>{{ row.name }}</td>
+    <td>{{ row.email }}</td>
+    <td>{{ row.status }}</td>
+    <td>{{ row.role }}</td>
+    <td>
+      <ui.Button
+        label="Delete"
+        context="table"
+        class_name="text-error"
+        hx-delete={{ "/api/users/" ~ row.id }}
+        hx-target="#users-table"
+        hx-swap="innerHTML"
+        hx-confirm={{ "Remove " ~ row.email ~ "?" }}
+      />
+    </td>
+  </tr>
+{% elif table_type == "team_members" %}
+  <tr>
+    <td>{{ row.name }}</td>
+    <td>{{ row.email }}</td>
+    <td>
+      {% if row.is_owner %}
+        <tables.StatusBadge status="Owner" type="member" />
+      {% else %}
+        <form
+          class="flex items-center gap-2"
+          hx-patch={{ "/api/teams/" ~ team_id ~ "/members/" ~ row.id }}
+          hx-target="#team-members-table"
+          hx-swap="innerHTML"
+        >
+          <select class="select select-bordered select-xs" name="role">
+            <option value="MEMBER" {{ "selected" if row.role == "MEMBER" }}>Member</option>
+            <option value="ADMIN" {{ "selected" if row.role == "ADMIN" }}>Admin</option>
+          </select>
+          <ui.Button label="Update" type="submit" context="table" />
+        </form>
+      {% endif %}
+    </td>
+    <td>
+      {% if row.is_owner %}
+        <span class="text-xs text-base-content/60">Owner</span>
+      {% else %}
+        <ui.Button
+          label="Remove"
+          context="table"
+          class_name="text-error"
+          hx-post={{ "/api/teams/" ~ team_id ~ "/members/remove" }}
+          hx-target="#team-members-table"
+          hx-swap="innerHTML"
+          hx-confirm={{ "Remove " ~ row.email ~ "?" }}
+          hx-vals={{ '{"user_name": "' ~ row.email ~ '"}' }}
+        />
+      {% endif %}
+    </td>
+  </tr>
+{% elif table_type == "team_invitations" %}
+  {% set status_value = row.status if row.status is defined else "" %}
+  {% set normalized_status = status_value|string|lower %}
+  <tr>
+    <td>{{ row.email }}</td>
+    <td>{{ row.role }}</td>
+    <td>
+      <tables.StatusBadge status={{ status_value }} type="invitation" />
+    </td>
+    <td>
+      {% if normalized_status == "accepted" %}
+        <span class="text-xs text-base-content/60">No action</span>
+      {% else %}
+        <ui.Button
+          label="Cancel"
+          context="table"
+          class_name="text-error"
+          hx-post={{ "/api/teams/" ~ team_id ~ "/invitations/" ~ row.id ~ "/cancel" }}
+          hx-target="#team-invitations-table"
+          hx-swap="innerHTML"
+          hx-confirm={{ "Cancel invite for " ~ row.email ~ "?" }}
+        />
+      {% endif %}
+    </td>
+  </tr>
+{% endif %}
