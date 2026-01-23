@@ -5,22 +5,35 @@ import Alpine from "alpinejs"
 window.htmx = htmx
 window.Alpine = Alpine
 
+const csrfErrorMessage = "CSRF validation failed. Please refresh the page and try again."
 const csrfCookieName = "XSRF-TOKEN"
 const csrfHeaderName = "X-XSRF-TOKEN"
-const csrfUnsafeMethods = new Set(["POST", "PUT", "PATCH", "DELETE"])
-const csrfErrorMessage = "CSRF validation failed. Please refresh the page and try again."
+const unsafeVerbs = new Set(["post", "put", "patch", "delete"])
 
-const getCsrfTokenFromCookie = () => {
-  const tokenPair = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${csrfCookieName}=`))
-  if (!tokenPair) {
-    return ""
+const readCookie = (name) => {
+  if (!document?.cookie) {
+    return null
   }
-  return decodeURIComponent(tokenPair.split("=")[1] ?? "")
+  const parts = document.cookie.split(";")
+  for (const part of parts) {
+    const trimmed = part.trim()
+    if (!trimmed.startsWith(`${name}=`)) {
+      continue
+    }
+    return decodeURIComponent(trimmed.substring(name.length + 1))
+  }
+  return null
 }
 
-const shouldAttachCsrfToken = (method) => csrfUnsafeMethods.has(method.toUpperCase())
+const readCsrfToken = () => {
+  const cookieToken = readCookie(csrfCookieName)
+  if (cookieToken) {
+    return cookieToken
+  }
+  const meta = document.querySelector('meta[name="csrf-token"]')
+  return meta?.getAttribute("content") || null
+}
+
 document.addEventListener("alpine:init", () => {
   Alpine.store("auth", {
     user: null,
@@ -45,13 +58,18 @@ document.addEventListener("alpine:init", () => {
 })
 registerHtmxExtension()
 document.body.addEventListener("htmx:configRequest", (event) => {
-  if (!shouldAttachCsrfToken(event.detail.verb ?? "")) {
+  const verb = event.detail?.verb?.toLowerCase()
+  if (!verb || !unsafeVerbs.has(verb)) {
     return
   }
-  const token = getCsrfTokenFromCookie()
-  if (token) {
-    event.detail.headers[csrfHeaderName] = token
+  const token = readCsrfToken()
+  if (!token) {
+    return
   }
+  if (!event.detail.headers) {
+    event.detail.headers = {}
+  }
+  event.detail.headers[csrfHeaderName] = token
 })
 document.body.addEventListener("htmx:responseError", (event) => {
   if (event.detail.xhr?.status !== 403) {
