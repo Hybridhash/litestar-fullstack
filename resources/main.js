@@ -34,6 +34,25 @@ const readCsrfToken = () => {
   return meta?.getAttribute("content") || null
 }
 
+const toastShell = () => document.getElementById("toast-shell")
+
+const showToast = (message, variant = "error", timeoutMs = 5000) => {
+  const container = toastShell()
+  if (!container) {
+    return
+  }
+  const alert = document.createElement("div")
+  alert.className = `alert alert-${variant}`
+  alert.setAttribute("role", "alert")
+  const span = document.createElement("span")
+  span.textContent = message
+  alert.appendChild(span)
+  container.appendChild(alert)
+  window.setTimeout(() => {
+    alert.remove()
+  }, timeoutMs)
+}
+
 document.addEventListener("alpine:init", () => {
   Alpine.store("auth", {
     user: null,
@@ -72,11 +91,25 @@ document.body.addEventListener("htmx:configRequest", (event) => {
   event.detail.headers[csrfHeaderName] = token
 })
 document.body.addEventListener("htmx:responseError", (event) => {
-  if (event.detail.xhr?.status !== 403) {
+  const status = event.detail.xhr?.status
+  if (status !== 403) {
     return
   }
   const responseText = event.detail.xhr?.responseText ?? ""
   if (!responseText.toLowerCase().includes("csrf")) {
+    const contentType = event.detail.xhr?.getResponseHeader("content-type") ?? ""
+    let message = "You do not have permission to perform this action."
+    if (contentType.includes("application/json")) {
+      try {
+        const payload = JSON.parse(responseText)
+        message = payload.detail || payload.message || message
+      } catch {
+        message = message
+      }
+    } else if (responseText && !responseText.includes("<")) {
+      message = responseText
+    }
+    showToast(message, "error")
     return
   }
   window.alert(csrfErrorMessage)
