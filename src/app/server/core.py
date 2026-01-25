@@ -56,7 +56,10 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
 
         from advanced_alchemy.exceptions import RepositoryError  # noqa: PLC0415
         from litestar.enums import RequestEncodingType  # noqa: PLC0415
-        from litestar.exceptions import PermissionDeniedException  # noqa: PLC0415
+        from litestar.exceptions import (  # noqa: PLC0415
+            NotAuthorizedException,
+            PermissionDeniedException,
+        )
         from litestar.params import Body  # noqa: PLC0415
         from litestar.security.jwt import Token  # noqa: PLC0415
 
@@ -72,7 +75,10 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         )
         from app.domain.accounts.deps import provide_user  # noqa: PLC0415
         from app.domain.accounts.guards import auth as jwt_auth  # noqa: PLC0415
-        from app.domain.accounts.services import RoleService, UserService  # noqa: PLC0415
+        from app.domain.accounts.services import (
+            RoleService,  # noqa: PLC0415
+            UserService,
+        )
         from app.domain.system.controllers import SystemController  # noqa: PLC0415
         from app.domain.tags.controllers import TagController  # noqa: PLC0415
         from app.domain.teams import signals as team_signals  # noqa: PLC0415
@@ -81,13 +87,17 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             TeamInvitationController,
             TeamMemberController,
         )
-        from app.domain.teams.services import TeamMemberService, TeamService  # noqa: PLC0415
+        from app.domain.teams.services import (  # noqa: PLC0415
+            TeamMemberService,
+            TeamService,
+        )
         from app.domain.web.controllers import WebController  # noqa: PLC0415
         from app.domain.web.pages import SiteController  # noqa: PLC0415
-        from app.lib.exceptions import (  # noqa: PLC0415
-            ApplicationError,
-            csrf_exception_handler,
+        from app.lib.exceptions import (
+            ApplicationError,  # noqa: PLC0415
             exception_to_http_response,
+            not_authorized_exception_handler,
+            permission_denied_exception_handler,
         )
         from app.server import plugins  # noqa: PLC0415
 
@@ -161,7 +171,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         app_config.exception_handlers = {
             ApplicationError: exception_to_http_response,
             RepositoryError: exception_to_http_response,
-            PermissionDeniedException: csrf_exception_handler,
+            NotAuthorizedException: not_authorized_exception_handler,
+            PermissionDeniedException: permission_denied_exception_handler,
         }
         # caching & redis
         app_config.response_cache_config = ResponseCacheConfig(
@@ -196,4 +207,5 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         hx_request = request.headers.get("HX-Request")
         if hx_request:
             cache_key = f"{cache_key}:hx={hx_request}"
+        return f"{self.app_slug}:{cache_key}"
         return f"{self.app_slug}:{cache_key}"
