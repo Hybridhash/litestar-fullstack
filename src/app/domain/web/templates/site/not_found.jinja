@@ -1,0 +1,18 @@
+<base.Layout title="Page not found" description="Not found" keywords="not found" request={{ request }}>
+  <div class="flex min-h-[60vh] items-center justify-center">
+    <div class="card w-full max-w-lg bg-base-100 shadow-sm">
+      <div class="card-body text-center">
+        <h1 class="text-3xl font-semibold">Page not found</h1>
+        <p class="text-base-content/70">We could not find the page you were looking for.</p>
+        <div class="mt-4 text-left">
+          {% with message=message, title="Not found", variant="warning" %}
+            {% include "partials/feedback.jinja" %}
+          {% endwith %}
+        </div>
+        <div class="card-actions justify-center">
+          <a class="btn btn-primary" href="/">Back to home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</base.Layout>

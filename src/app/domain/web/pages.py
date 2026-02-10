@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from advanced_alchemy.exceptions import NotFoundError as AdvancedAlchemyNotFoundError
+from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, get
 from litestar.di import Provide
 from litestar.enums import MediaType
-from litestar.exceptions import PermissionDeniedException
+from litestar.exceptions import NotFoundException, PermissionDeniedException
 from litestar.repository.exceptions import NotFoundError
 from litestar.response import Template
 from litestar.status_codes import HTTP_200_OK
@@ -15,17 +17,19 @@ from sqlalchemy.orm import load_only, selectinload
 from app.db import models as m
 from app.db.models.team_member import TeamMember as TeamMemberModel
 from app.domain.accounts.deps import provide_users_service
+from app.domain.accounts.filters import UserFilterBuilder, normalize_user_query_params
 from app.domain.accounts.guards import requires_active_user, requires_superuser
 from app.domain.teams import urls
+from app.domain.teams.filters import (
+    TeamFilterBuilder,
+    TeamInvitationFilterBuilder,
+    TeamMemberFilterBuilder,
+    normalize_team_query_params,
+    team_members_count_subquery,
+)
 from app.domain.teams.guards import requires_team_admin, requires_team_membership
 from app.domain.teams.services import TeamInvitationService, TeamMemberService, TeamService
 from app.domain.web.notification_helpers import build_notification_context
-from app.domain.web.table_helpers import (
-    build_team_invitations_table,
-    build_team_members_table,
-    build_teams_table,
-    build_users_table,
-)
 from app.lib.deps import create_service_provider
 
 if TYPE_CHECKING:
@@ -91,14 +95,18 @@ class SiteController(Controller):
         q: str | None = None,
         filter_by: str | None = None,
     ) -> Template:
-        users, _ = await users_service.list_and_count()
-        context = build_users_table(users, query=q, filter_by=filter_by)
+        cleaned_query, filter_by, _, _ = normalize_user_query_params(q, filter_by, None, "asc")
+        statement_filters = UserFilterBuilder(cleaned_query, filter_by).build()
+        _, user_total = await users_service.list_and_count(
+            *statement_filters,
+            LimitOffset(limit=1, offset=0),
+        )
         return Template(
             template_name="site/users.jinja",
             context={
-                "user_total": context["total"],
-                "query": q or "",
-                "filter_by": context["filter_by"],
+                "user_total": user_total,
+                "query": cleaned_query,
+                "filter_by": filter_by,
             },
             media_type=MediaType.HTML,
         )
@@ -116,14 +124,20 @@ class SiteController(Controller):
             membership_filters.append(
                 m.Team.id.in_(select(TeamMemberModel.team_id).where(TeamMemberModel.user_id == request.user.id)),
             )
-        teams, _ = await teams_service.list_and_count(*membership_filters)
-        context = build_teams_table(teams, query=q, filter_by=filter_by)
+        cleaned_query, filter_by, _, _ = normalize_team_query_params(q, filter_by, None, "asc")
+        members_count = team_members_count_subquery()
+        statement_filters = TeamFilterBuilder(cleaned_query, filter_by, members_count).build()
+        _, team_total = await teams_service.list_and_count(
+            *membership_filters,
+            *statement_filters,
+            LimitOffset(limit=1, offset=0),
+        )
         return Template(
             template_name="site/teams.jinja",
             context={
-                "team_total": context["total"],
-                "query": q or "",
-                "filter_by": context["filter_by"],
+                "team_total": team_total,
+                "query": cleaned_query,
+                "filter_by": filter_by,
             },
             media_type=MediaType.HTML,
         )
@@ -141,18 +155,23 @@ class SiteController(Controller):
         team_members_service: TeamMemberService,
         team_id: UUID,
         q: str | None = None,
-        page: int = 1,
     ) -> Template:
-        team = await teams_service.get(team_id)
-        members, _ = await team_members_service.list_and_count(m.TeamMember.team_id == team_id)
-        context = build_team_members_table(members, query=q, page=page)
+        try:
+            team = await teams_service.get(team_id)
+        except AdvancedAlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Team not found.") from exc
+        member_filters, cleaned_query = TeamMemberFilterBuilder(team_id, q).build()
+        _, member_total = await team_members_service.list_and_count(
+            *member_filters,
+            LimitOffset(limit=1, offset=0),
+        )
         return Template(
             template_name="site/team_members.jinja",
             context={
                 "team": team,
                 "team_id": team_id,
-                "member_total": context["total"],
-                "query": q or "",
+                "member_total": member_total,
+                "query": cleaned_query,
             },
             media_type=MediaType.HTML,
         )
@@ -171,16 +190,22 @@ class SiteController(Controller):
         team_id: UUID,
         q: str | None = None,
     ) -> Template:
-        team = await teams_service.get(team_id)
-        invitations, _ = await team_invitations_service.list_and_count(m.TeamInvitation.team_id == team_id)
-        context = build_team_invitations_table(invitations, query=q)
+        try:
+            team = await teams_service.get(team_id)
+        except AdvancedAlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Team not found.") from exc
+        invitation_filters, cleaned_query = TeamInvitationFilterBuilder(team_id, q).build()
+        _, invitation_total = await team_invitations_service.list_and_count(
+            *invitation_filters,
+            LimitOffset(limit=1, offset=0),
+        )
         return Template(
             template_name="site/team_invitations.jinja",
             context={
                 "team": team,
                 "team_id": team_id,
-                "invitation_total": context["total"],
-                "query": q or "",
+                "invitation_total": invitation_total,
+                "query": cleaned_query,
             },
             media_type=MediaType.HTML,
         )

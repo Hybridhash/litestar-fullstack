@@ -8,7 +8,7 @@ window.Alpine = Alpine
 const csrfErrorMessage = "CSRF validation failed. Please refresh the page and try again."
 const csrfCookieName = "XSRF-TOKEN"
 const csrfHeaderName = "X-XSRF-TOKEN"
-const unsafeVerbs = new Set(["post", "put", "patch", "delete"])
+const unsafeVerbs = new Set(["POST", "PUT", "PATCH", "DELETE"])
 
 const readCookie = (name) => {
   if (!document?.cookie) {
@@ -77,7 +77,7 @@ document.addEventListener("alpine:init", () => {
 })
 registerHtmxExtension()
 document.body.addEventListener("htmx:configRequest", (event) => {
-  const verb = event.detail?.verb?.toLowerCase()
+  const verb = event.detail?.verb?.toUpperCase()
   if (!verb || !unsafeVerbs.has(verb)) {
     return
   }

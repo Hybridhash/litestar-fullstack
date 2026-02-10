@@ -188,3 +188,9 @@ tests/*
 
 .kiro/
 kiro/*
+
+
+.codex/
+.github/
+.specify/
+specs/

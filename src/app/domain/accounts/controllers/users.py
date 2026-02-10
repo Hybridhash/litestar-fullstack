@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated
 from uuid import UUID
 
+from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, delete, get, patch, post
 from litestar.di import Provide
 from litestar.enums import RequestEncodingType
@@ -12,8 +13,10 @@ from litestar.params import Body, Dependency, Parameter
 from litestar.plugins.htmx import HTMXRequest, HTMXTemplate
 from litestar.status_codes import HTTP_200_OK
 
+from app.db import models as m
 from app.domain.accounts import urls
 from app.domain.accounts.deps import provide_users_service
+from app.domain.accounts.filters import UserFilterBuilder, UserSortBuilder, normalize_user_query_params
 from app.domain.accounts.guards import requires_superuser
 from app.domain.accounts.schemas import User, UserCreate, UserUpdate
 from app.domain.web.table_helpers import build_users_table
@@ -29,6 +32,8 @@ if TYPE_CHECKING:
 class UserController(Controller):
     """User Account Controller."""
 
+    _DEFAULT_PAGE_SIZE = 20
+    _MAX_PAGE_SIZE = 100
     tags = ["User Accounts"]
     guards = [requires_superuser]
     dependencies = {
@@ -54,14 +59,33 @@ class UserController(Controller):
         filters: Annotated[list[FilterTypes], Dependency(skip_validation=True)],
         q: str | None = None,
         page: int = 1,
+        page_size: int = _DEFAULT_PAGE_SIZE,
         filter_by: str | None = None,
         sort: str | None = None,
         order: str = "asc",
     ) -> OffsetPagination[User] | HTMXTemplate:
         """List users."""
         if request.htmx or request.headers.get("HX-Request", "").lower() == "true":
-            results, _ = await users_service.list_and_count()
-            context = build_users_table(results, query=q, page=page, filter_by=filter_by, sort=sort, order=order)
+            cleaned_query, filter_by, sort, order = normalize_user_query_params(q, filter_by, sort, order)
+            safe_page_size = max(1, min(page_size, self._MAX_PAGE_SIZE))
+            offset = max(page - 1, 0) * safe_page_size
+            statement_filters = UserFilterBuilder(cleaned_query, filter_by).build()
+            order_by = UserSortBuilder(sort, order).build()
+            results, total = await users_service.list_and_count(
+                *statement_filters,
+                LimitOffset(limit=safe_page_size, offset=offset),
+                order_by=[order_by] if order_by is not None else None,
+            )
+            context = build_users_table(
+                results,
+                query=cleaned_query,
+                page=page,
+                page_size=safe_page_size,
+                total=total,
+                filter_by=filter_by,
+                sort=sort,
+                order=order,
+            )
             return HTMXTemplate(template_name="partials/users_table.jinja", context=context)
         results, total = await users_service.list_and_count(*filters)
         return users_service.to_schema(data=results, total=total, schema_type=User, filters=filters)
@@ -86,8 +110,16 @@ class UserController(Controller):
         """Create a new user."""
         db_obj = await users_service.create(data.to_dict())
         if request.htmx:
-            results, _ = await users_service.list_and_count()
-            context = build_users_table(results)
+            results, total = await users_service.list_and_count(
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+                order_by=[m.User.name.asc()],
+            )
+            context = build_users_table(
+                results,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             return HTMXTemplate(template_name="partials/users_table.jinja", context=context)
         return users_service.to_schema(db_obj, schema_type=User)
 
@@ -112,7 +144,15 @@ class UserController(Controller):
         """Delete a user from the system."""
         _ = await users_service.delete(user_id)
         if request.htmx:
-            results, _ = await users_service.list_and_count()
-            context = build_users_table(results)
+            results, total = await users_service.list_and_count(
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+                order_by=[m.User.name.asc()],
+            )
+            context = build_users_table(
+                results,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             return HTMXTemplate(template_name="partials/users_table.jinja", context=context)
         return None

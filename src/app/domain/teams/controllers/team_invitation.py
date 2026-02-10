@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, Response, get, post
 from litestar.exceptions import PermissionDeniedException
 from litestar.params import Parameter
@@ -13,6 +14,7 @@ from litestar.status_codes import HTTP_303_SEE_OTHER, HTTP_409_CONFLICT
 from app.db import models as m
 from app.domain.accounts.guards import requires_active_user
 from app.domain.teams import urls
+from app.domain.teams.filters import TeamInvitationFilterBuilder
 from app.domain.teams.guards import requires_team_admin
 from app.domain.teams.schemas import TeamInvitation, TeamInvitationCreate
 from app.domain.teams.services import TeamInvitationService, TeamMemberService, TeamService
@@ -29,6 +31,8 @@ if TYPE_CHECKING:
 class TeamInvitationController(Controller):
     """Team Invitations."""
 
+    _DEFAULT_PAGE_SIZE = 20
+    _MAX_PAGE_SIZE = 100
     tags = ["Teams"]
     guards = [requires_active_user]
     dependencies = {
@@ -96,10 +100,24 @@ class TeamInvitationController(Controller):
         team_invitations_service: TeamInvitationService,
         team_id: UUID = Parameter(title="Team ID", description="The team to list invitations for."),
         q: str | None = None,
+        page: int = 1,
+        page_size: int = _DEFAULT_PAGE_SIZE,
     ) -> OffsetPagination[TeamInvitation] | HTMXTemplate:
-        invitations, total = await team_invitations_service.list_and_count(m.TeamInvitation.team_id == team_id)
+        filters, cleaned_query = TeamInvitationFilterBuilder(team_id, q).build()
+        safe_page_size = max(1, min(page_size, self._MAX_PAGE_SIZE))
+        offset = max(page - 1, 0) * safe_page_size
+        invitations, total = await team_invitations_service.list_and_count(
+            *filters,
+            LimitOffset(limit=safe_page_size, offset=offset),
+        )
         if request.htmx or request.headers.get("HX-Request", "").lower() == "true":
-            context = build_team_invitations_table(invitations, query=q)
+            context = build_team_invitations_table(
+                invitations,
+                query=cleaned_query,
+                page=page,
+                page_size=safe_page_size,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_invitations_table.jinja", context=context)
         return team_invitations_service.to_schema(schema_type=TeamInvitation, data=invitations, total=total)
@@ -127,8 +145,16 @@ class TeamInvitationController(Controller):
             return self._feedback_response(request, getattr(exc, "detail", "Unable to send invitation."))
 
         if request.htmx:
-            invitations, _ = await team_invitations_service.list_and_count(m.TeamInvitation.team_id == team_id)
-            context = build_team_invitations_table(invitations)
+            invitations, total = await team_invitations_service.list_and_count(
+                m.TeamInvitation.team_id == team_id,
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+            )
+            context = build_team_invitations_table(
+                invitations,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_invitations_table.jinja", context=context)
         if self._wants_html(request):
@@ -152,8 +178,16 @@ class TeamInvitationController(Controller):
             raise PermissionDeniedException(detail="Insufficient permissions to cancel invitation.")
         _ = await team_invitations_service.delete(invitation_id)
         if request.htmx:
-            invitations, _ = await team_invitations_service.list_and_count(m.TeamInvitation.team_id == team_id)
-            context = build_team_invitations_table(invitations)
+            invitations, total = await team_invitations_service.list_and_count(
+                m.TeamInvitation.team_id == team_id,
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+            )
+            context = build_team_invitations_table(
+                invitations,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_invitations_table.jinja", context=context)
         if self._wants_html(request):

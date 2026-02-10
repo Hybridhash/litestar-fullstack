@@ -21,9 +21,9 @@
     ".coverage": true,
     "node_modules": false
   },
-  "ruff.format.args": ["--config=${workspaceFolder}/pyproject.toml"],
-  "ruff.lint.run": "onType",
-  "ruff.lint.args": ["--config=${workspaceFolder}/pyproject.toml"],
+  "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+  "ruff.lint.preview": false,
+  "ruff.format.preview": false,
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "black-formatter.importStrategy": "fromEnvironment",
   "pylint.importStrategy": "fromEnvironment",

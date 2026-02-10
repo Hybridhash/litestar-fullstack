@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
+from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, Response, get, patch, post
 from litestar.di import Provide
 from litestar.params import Parameter
@@ -15,6 +16,7 @@ from app.db import models as m
 from app.domain.accounts.deps import provide_users_service
 from app.domain.accounts.guards import requires_active_user
 from app.domain.teams import urls
+from app.domain.teams.filters import TeamMemberFilterBuilder
 from app.domain.teams.guards import requires_team_admin, requires_team_membership
 from app.domain.teams.schemas import Team, TeamMember, TeamMemberModify, TeamMemberUpdate
 from app.domain.teams.services import TeamMemberService, TeamService
@@ -32,6 +34,8 @@ if TYPE_CHECKING:
 class TeamMemberController(Controller):
     """Team Members."""
 
+    _DEFAULT_PAGE_SIZE = 20
+    _MAX_PAGE_SIZE = 100
     tags = ["Team Members"]
     guards = [requires_active_user]
     dependencies = {
@@ -54,11 +58,24 @@ class TeamMemberController(Controller):
         team_id: UUID = Parameter(title="Team ID", description="The team to list."),
         q: str | None = None,
         page: int = 1,
+        page_size: int = _DEFAULT_PAGE_SIZE,
     ) -> OffsetPagination[TeamMember] | HTMXTemplate:
         """List team members."""
-        members, total = await team_members_service.list_and_count(m.TeamMember.team_id == team_id)
+        filters, cleaned_query = TeamMemberFilterBuilder(team_id, q).build()
+        safe_page_size = max(1, min(page_size, self._MAX_PAGE_SIZE))
+        offset = max(page - 1, 0) * safe_page_size
+        members, total = await team_members_service.list_and_count(
+            *filters,
+            LimitOffset(limit=safe_page_size, offset=offset),
+        )
         if request.htmx or request.headers.get("HX-Request", "").lower() == "true":
-            context = build_team_members_table(members, query=q, page=page)
+            context = build_team_members_table(
+                members,
+                query=cleaned_query,
+                page=page,
+                page_size=safe_page_size,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_members_table.jinja", context=context)
         return team_members_service.to_schema(schema_type=TeamMember, data=members, total=total)
@@ -92,6 +109,8 @@ class TeamMemberController(Controller):
         else:
             form_data = await request.form()
             payload = dict(form_data)
+        if "userName" in payload and "user_name" not in payload:
+            payload["user_name"] = payload.pop("userName")
         return schema_type(**payload)
 
     def _feedback_response(self, request: HTMXRequest, message: str) -> HTMXTemplate | Response:
@@ -120,8 +139,16 @@ class TeamMemberController(Controller):
         team_obj.members.append(m.TeamMember(user_id=user_obj.id, team_id=team_id, role=role))
         team_obj = await teams_service.update(item_id=team_id, data=team_obj)
         if request.htmx:
-            members, _ = await team_members_service.list_and_count(m.TeamMember.team_id == team_id)
-            context = build_team_members_table(members)
+            members, total = await team_members_service.list_and_count(
+                m.TeamMember.team_id == team_id,
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+            )
+            context = build_team_members_table(
+                members,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_members_table.jinja", context=context)
         if self._wants_html(request):
@@ -152,8 +179,16 @@ class TeamMemberController(Controller):
             return self._feedback_response(request, msg)
         team_obj = await teams_service.get(team_id)
         if request.htmx:
-            members, _ = await team_members_service.list_and_count(m.TeamMember.team_id == team_id)
-            context = build_team_members_table(members)
+            members, total = await team_members_service.list_and_count(
+                m.TeamMember.team_id == team_id,
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+            )
+            context = build_team_members_table(
+                members,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_members_table.jinja", context=context)
         if self._wants_html(request):
@@ -182,8 +217,16 @@ class TeamMemberController(Controller):
             return self._feedback_response(request, msg)
         updated_member = await team_members_service.update(item_id=member_id, data=data.to_dict())
         if request.htmx:
-            members, _ = await team_members_service.list_and_count(m.TeamMember.team_id == team_id)
-            context = build_team_members_table(members)
+            members, total = await team_members_service.list_and_count(
+                m.TeamMember.team_id == team_id,
+                LimitOffset(limit=self._DEFAULT_PAGE_SIZE, offset=0),
+            )
+            context = build_team_members_table(
+                members,
+                page=1,
+                page_size=self._DEFAULT_PAGE_SIZE,
+                total=total,
+            )
             context["team_id"] = str(team_id)
             return HTMXTemplate(template_name="partials/team_members_table.jinja", context=context)
         if self._wants_html(request):

@@ -75,8 +75,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         )
         from app.domain.accounts.deps import provide_user  # noqa: PLC0415
         from app.domain.accounts.guards import auth as jwt_auth  # noqa: PLC0415
-        from app.domain.accounts.services import (
-            RoleService,  # noqa: PLC0415
+        from app.domain.accounts.services import (  # noqa: PLC0415
+            RoleService,
             UserService,
         )
         from app.domain.system.controllers import SystemController  # noqa: PLC0415
@@ -93,8 +93,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         )
         from app.domain.web.controllers import WebController  # noqa: PLC0415
         from app.domain.web.pages import SiteController  # noqa: PLC0415
-        from app.lib.exceptions import (
-            ApplicationError,  # noqa: PLC0415
+        from app.lib.exceptions import (  # noqa: PLC0415
+            ApplicationError,
             exception_to_http_response,
             not_authorized_exception_handler,
             permission_denied_exception_handler,
@@ -207,5 +207,4 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         hx_request = request.headers.get("HX-Request")
         if hx_request:
             cache_key = f"{cache_key}:hx={hx_request}"
-        return f"{self.app_slug}:{cache_key}"
         return f"{self.app_slug}:{cache_key}"
