@@ -5,6 +5,7 @@ import pytest
 from litestar import Litestar, get
 from litestar.repository.exceptions import ConflictError, NotFoundError
 from litestar.status_codes import (
+    HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
@@ -62,6 +63,7 @@ def test_repository_exception_to_http_response(exc: type[ApplicationError], stat
     [
         (exceptions.AuthorizationError, HTTP_403_FORBIDDEN, True),
         (exceptions.AuthorizationError, HTTP_403_FORBIDDEN, False),
+        (exceptions.ApplicationClientError, HTTP_400_BAD_REQUEST, False),
         (exceptions.ApplicationError, HTTP_500_INTERNAL_SERVER_ERROR, False),
     ],
 )

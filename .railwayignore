@@ -1,0 +1,24 @@
+# Ignore Dockerfiles - use Nixpacks instead
+deploy/
+Dockerfile
+Dockerfile.*
+**/Dockerfile
+**/Dockerfile.*
+
+# Standard ignores
+.litestar.json
+.env
+.venv
+venv
+node_modules
+__pycache__
+*.pyc
+dist/
+tmp/
+.git
+.github
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.hypothesis
+*.log

@@ -67,12 +67,24 @@ class DatabaseSettings:
     def engine(self) -> AsyncEngine:
         return self.get_engine()
 
+    @staticmethod
+    def _normalize_url_for_async_engine(url: str) -> str:
+        """Normalize postgres DSNs to asyncpg for create_async_engine()."""
+        if url.startswith("postgresql+asyncpg://"):
+            return url
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
+
     def get_engine(self) -> AsyncEngine:
         if self._engine_instance is not None:
             return self._engine_instance
-        if self.URL.startswith("postgresql+asyncpg"):
+        url = self._normalize_url_for_async_engine(self.URL)
+        if url.startswith("postgresql+asyncpg"):
             engine = create_async_engine(
-                url=self.URL,
+                url=url,
                 future=True,
                 json_serializer=encode_json,
                 json_deserializer=decode_json,
@@ -128,9 +140,9 @@ class DatabaseSettings:
                         format="binary",
                     ),
                 )
-        elif self.URL.startswith("sqlite+aiosqlite"):
+        elif url.startswith("sqlite+aiosqlite"):
             engine = create_async_engine(
-                url=self.URL,
+                url=url,
                 future=True,
                 json_serializer=encode_json,
                 json_deserializer=decode_json,
@@ -155,7 +167,7 @@ class DatabaseSettings:
                 dbapi_connection.exec_driver_sql("BEGIN")
         else:
             engine = create_async_engine(
-                url=self.URL,
+                url=url,
                 future=True,
                 json_serializer=encode_json,
                 json_deserializer=decode_json,

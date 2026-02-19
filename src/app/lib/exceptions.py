@@ -9,9 +9,10 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
-from advanced_alchemy.exceptions import IntegrityError
+from advanced_alchemy.exceptions import DuplicateKeyError, IntegrityError
 from litestar.enums import MediaType
 from litestar.exceptions import (
+    ClientException,
     HTTPException,
     InternalServerException,
     NotAuthorizedException,
@@ -116,7 +117,7 @@ async def after_exception_hook_handler(exc: Exception, _scope: Scope) -> None:
 
 def exception_to_http_response(
     request: Request[Any, Any, Any],
-    exc: ApplicationError | RepositoryError,
+    exc: Exception,
 ) -> Response[ExceptionResponseContent]:
     """Transform repository exceptions to HTTP exceptions.
 
@@ -130,15 +131,18 @@ def exception_to_http_response(
     http_exc: type[HTTPException]
     if isinstance(exc, NotFoundError):
         http_exc = NotFoundException
-    elif isinstance(exc, ConflictError | RepositoryError | IntegrityError):
+    elif isinstance(exc, ConflictError | RepositoryError | IntegrityError | DuplicateKeyError):
         http_exc = _HTTPConflictException
     elif isinstance(exc, AuthorizationError):
         http_exc = PermissionDeniedException
+    elif isinstance(exc, ApplicationClientError):
+        http_exc = ClientException
     else:
         http_exc = InternalServerException
     if request.app.debug and http_exc not in (PermissionDeniedException, NotFoundError, AuthorizationError):
         return create_debug_response(request, exc)
-    return create_exception_response(request, http_exc(detail=str(exc.__cause__)))
+    detail = getattr(exc, "detail", "") or (str(exc.__cause__) if exc.__cause__ else str(exc))
+    return create_exception_response(request, http_exc(detail=detail))
 
 
 def permission_denied_exception_handler(

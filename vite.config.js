@@ -22,8 +22,8 @@ export default defineConfig({
     litestar({
       input: ["resources/main.js", "resources/main.css"],
       assetUrl: ASSET_URL,
-      bundleDirectory: "src/app/domain/web/public",
-      resourceDirectory: "resources",
+      bundleDir: "src/app/domain/web/public",
+      resourceDir: "resources",
       hotFile: "src/app/domain/web/public/hot",
     }),
   ],

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from advanced_alchemy.exceptions import RepositoryError
 from advanced_alchemy.repository import (
     SQLAlchemyAsyncRepository,
     SQLAlchemyAsyncSlugRepository,
@@ -86,6 +87,9 @@ class TeamService(SQLAlchemyAsyncRepositoryService[m.Team]):
             owner_id: UUID | None = data.pop("owner_id", None)
             owner: m.User | None = data.pop("owner", None)
             tags_added: list[str] = data.pop("tags", [])
+            if owner_id is None and owner is None:
+                msg = "'owner_id' is required to create a team."
+                raise RepositoryError(msg)
             data["id"] = data.get("id", uuid4())
             data = await super().to_model(data)
             if tags_added:

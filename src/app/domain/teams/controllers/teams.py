@@ -11,6 +11,7 @@ from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.status_codes import HTTP_200_OK
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.db import models as m
 from app.db.models.team_member import TeamMember as TeamMemberModel
@@ -44,7 +45,7 @@ class TeamController(Controller):
     dependencies = create_service_dependencies(
         TeamService,
         key="teams_service",
-        load=[m.Team.tags, m.Team.members],
+        load=[selectinload(m.Team.tags), selectinload(m.Team.members)],
         filters={"id_filter": UUID},
     )
 

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
 from litestar import Controller, delete, get, patch, post
+from sqlalchemy.orm import selectinload
 
 from app.db import models as m
 from app.domain.accounts.guards import requires_active_user, requires_superuser
@@ -45,7 +46,7 @@ class TagController(Controller):
     dependencies = create_service_dependencies(
         TagService,
         key="tags_service",
-        load=[m.Tag.teams],
+        load=[selectinload(m.Tag.teams)],
         filters={
             "id_filter": UUID,
             "created_at": True,
