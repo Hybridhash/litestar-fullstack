@@ -10,11 +10,11 @@
 
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body gap-4">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div class="space-y-3">
+      <div class="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 space-y-3">
           <div class="text-sm text-base-content/60">{{ member_total }} members</div>
           <form
-            class="flex w-full max-w-md gap-2"
+            class="flex w-full max-w-md flex-wrap gap-2 sm:flex-nowrap"
             hx-get="/api/teams/{{ team_id }}/members"
             hx-target="#team-members-table"
           >
@@ -22,10 +22,10 @@
               name="q"
               value="{{ query }}"
               placeholder="Search by name or email"
-              class="input input-bordered w-full"
+              class="input input-bordered w-full sm:flex-1"
               type="search"
             />
-            <button class="btn btn-secondary" type="submit">Apply</button>
+            <button class="btn btn-secondary w-full sm:w-auto" type="submit">Apply</button>
           </form>
           <div id="team-members-feedback"></div>
         </div>

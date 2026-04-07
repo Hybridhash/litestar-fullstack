@@ -152,6 +152,7 @@ dist-ssr
 tsconfig.tsbuildinfo
 
 # Editor directories and files
+# Keep recommended extensions, ignore local workspace settings
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -194,3 +195,6 @@ kiro/*
 .github/
 .specify/
 specs/
+
+reference/*
+.reference/*

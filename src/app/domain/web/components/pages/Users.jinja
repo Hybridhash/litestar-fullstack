@@ -10,29 +10,29 @@
 
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body gap-4">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div class="space-y-3">
+      <div class="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 space-y-3">
           <div class="text-sm text-base-content/60">{{ user_total }} total users</div>
-          <form class="flex w-full max-w-md gap-2" hx-get="/api/users" hx-target="#users-table">
+          <form class="flex w-full max-w-md flex-wrap gap-2 sm:flex-nowrap" hx-get="/api/users" hx-target="#users-table">
             <input
               name="q"
               value="{{ query }}"
               placeholder="Search by name or email"
-              class="input input-bordered w-full"
+              class="input input-bordered w-full sm:flex-1"
               type="search"
             />
-            <select class="select select-bordered" name="filter_by">
+            <select class="select select-bordered w-full sm:w-auto" name="filter_by">
               <option value="all" {{ "selected" if filter_by == "all" }}>All</option>
               <option value="name" {{ "selected" if filter_by == "name" }}>Name</option>
               <option value="email" {{ "selected" if filter_by == "email" }}>Email</option>
               <option value="role" {{ "selected" if filter_by == "role" }}>Role</option>
               <option value="status" {{ "selected" if filter_by == "status" }}>Status</option>
             </select>
-            <select class="select select-bordered" name="order">
+            <select class="select select-bordered w-full sm:w-auto" name="order">
               <option value="asc">Asc</option>
               <option value="desc">Desc</option>
             </select>
-            <button class="btn btn-primary" type="submit">Apply</button>
+            <button class="btn btn-primary w-full sm:w-auto" type="submit">Apply</button>
           </form>
         </div>
         <div class="card w-full max-w-sm bg-base-200/60">

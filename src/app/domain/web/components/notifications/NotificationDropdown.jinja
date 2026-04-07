@@ -9,9 +9,12 @@
     </svg>
   </div>
 </button>
-<div tabindex="0" class="dropdown-content z-[60] mt-3 w-96">
+<div
+  tabindex="0"
+  class="dropdown-content left-1/2 z-[60] mt-3 w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] -translate-x-1/2 sm:left-auto sm:right-0 sm:w-96 sm:max-w-[24rem] sm:translate-x-0"
+>
   <div class="card bg-base-100 shadow-xl hover-3d">
-    <div class="card-body gap-3">
+    <div class="card-body max-h-[70vh] gap-3 overflow-y-auto">
       <div class="flex items-center justify-between">
         <h3 class="card-title text-lg">Notifications</h3>
         <span class="text-xs text-base-content/60">{{ notification_count }} total</span>

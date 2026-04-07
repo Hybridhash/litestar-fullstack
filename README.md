@@ -66,6 +66,74 @@ If you want to run the entire development environment containerized, you can run
 docker compose up
 ```
 
+### Railway (CLI Deploy)
+
+This repository includes a Railway deploy helper for a split runtime:
+
+- `Litestar Web Frontend` (HTTP app)
+- `SAQ Worker` (background jobs)
+- `Postgres` + `Redis` managed services
+
+First-time setup (creates/links services and configures variables):
+
+```bash
+railway login
+./tools/deploy/railway/deploy.sh --project-name "<your-project-name>"
+```
+
+Subsequent deploys (stream logs):
+
+```bash
+./tools/deploy/railway/deploy.sh --ci
+```
+
+Useful checks:
+
+```bash
+railway service link "Litestar Web Frontend" && railway service status --json
+railway service link "SAQ Worker" && railway service status --json
+railway domain --service "Litestar Web Frontend" --json
+```
+
+Create or promote a superuser in Railway production:
+
+```bash
+railway ssh \
+  --project 479a9831-6c68-4c89-93b5-229655b83355 \
+  --environment production \
+  --service "Litestar Web Frontend" \
+  'bash -lc "/opt/venv/bin/app users create-user --email admin@example.net --name AdminUser --password SuperAdmin123! --superuser"'
+```
+
+If the user already exists:
+
+```bash
+railway ssh \
+  --project 479a9831-6c68-4c89-93b5-229655b83355 \
+  --environment production \
+  --service "Litestar Web Frontend" \
+  'bash -lc "/opt/venv/bin/app users promote-to-superuser --email admin@example.net"'
+```
+
+Why this pattern is required:
+
+- `railway ssh ... 'bash -lc ...'` ensures Nix profile libraries are loaded (required for `greenlet` / SQLAlchemy async path).
+- `/opt/venv/bin/app` avoids PATH issues inside non-interactive container commands.
+- Avoid running `railway run ... uv run app ...` from repository root when `.env` exists; this project loads `.env` with override and may point commands to your local database.
+
+Operational notes for the current setup:
+
+- Deploys are currently CLI-triggered; `git push` does not auto-deploy unless Railway GitHub source wiring is enabled.
+- Web startup runs migrations first (`app database upgrade --no-prompt && app run ...`), then starts the server.
+- With `numReplicas: 1`, brief downtime can occur during rollout.
+- Postgres/Redis data, env vars, and domain config persist across app deploys (data loss risk is mainly destructive actions like deleting a service/volume or destructive migrations).
+
+Railway hardening backlog:
+
+- [ ] GitHub auto-deploy wiring check (optional switch from manual CLI deploys)
+- [ ] Safer migration strategy for scale-out (dedicated release job or migration guard for multi-replica startups)
+- [ ] Near-zero downtime pattern (replica strategy + rollout tuning)
+
 ### Details
 
 We have documented the process to help you get the repository up and running.
@@ -169,13 +237,13 @@ After the upgrade, load the default roles so signup can assign the configured ro
 
 ## Worker Commands
 
-The following shows the commands available with the `worker` CLI command. This controls the `saq` worker processes. However, when using the `SAQ_USE_SERVER_LIFESPAN=True` environment variable, the background workers are automatically started and stopped with the Litestar HTTP server.
+The following shows the commands available with the `workers` CLI command. This controls the `saq` worker processes. However, when using the `SAQ_USE_SERVER_LIFESPAN=True` environment variable, the background workers are automatically started and stopped with the Litestar HTTP server.
 
 ```bash
-❯ app worker
+❯ app workers
 Using Litestar app from env: 'app.asgi:create_app'
 
- Usage: app worker [OPTIONS] COMMAND [ARGS]...
+ Usage: app workers [OPTIONS] COMMAND [ARGS]...
 
  Manage application background workers.
 
@@ -183,7 +251,8 @@ Using Litestar app from env: 'app.asgi:create_app'
 │ --help  -h    Show this message and exit.                                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ run       Starts the background workers.                                     │
+│ run       Run background worker processes.                                   │
+│ status    Check the status of currently configured workers and queues.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
 ```

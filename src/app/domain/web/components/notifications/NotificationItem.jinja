@@ -11,12 +11,12 @@
 
 <div class="flex items-start gap-3">
   <span class="{{ status_class }} mt-1"></span>
-  <div class="flex-1 space-y-2">
+  <div class="flex-1 min-w-0 space-y-2">
     <div class="flex items-center justify-between gap-3">
-      <div class="text-sm font-semibold">{{ notification.title }}</div>
+      <div class="text-sm font-semibold break-words">{{ notification.title }}</div>
       <span class="text-xs text-base-content/60 capitalize">{{ status_value or "new" }}</span>
     </div>
-    <p class="text-xs text-base-content/70">{{ notification.description }}</p>
+    <p class="text-xs text-base-content/70 break-words">{{ notification.description }}</p>
     {% if notification.type == "invitation" %}
       <div class="flex flex-wrap items-center gap-2">
         <form

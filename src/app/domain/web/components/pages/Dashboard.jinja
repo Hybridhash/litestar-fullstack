@@ -29,7 +29,7 @@
   </div>
 
   <div class="grid gap-6 lg:grid-cols-3">
-    <div class="card col-span-2 bg-base-100 shadow-sm">
+    <div class="card min-w-0 bg-base-100 shadow-sm lg:col-span-2">
       <div class="card-body">
         <h2 class="card-title">Teams snapshot</h2>
         <p class="text-sm text-base-content/70">
@@ -40,7 +40,7 @@
         </div>
       </div>
     </div>
-    <div class="card bg-base-100 shadow-sm">
+    <div class="card min-w-0 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title">Quick actions</h2>
         <div class="space-y-2 text-sm text-base-content/70">
@@ -48,7 +48,7 @@
           <div class="flex flex-col gap-2">
             <a
               href="/teams"
-              class="btn btn-primary btn-sm"
+              class="btn btn-primary btn-sm w-full"
               hx-get="/teams"
               hx-target="#page-shell"
               hx-select="#page-shell"
@@ -59,7 +59,7 @@
             </a>
             <a
               href="/users"
-              class="btn btn-outline btn-sm"
+              class="btn btn-outline btn-sm w-full"
               hx-get="/users"
               hx-target="#page-shell"
               hx-select="#page-shell"

@@ -9,6 +9,14 @@ const csrfErrorMessage = "CSRF validation failed. Please refresh the page and tr
 const csrfCookieName = "XSRF-TOKEN"
 const csrfHeaderName = "X-XSRF-TOKEN"
 const unsafeVerbs = new Set(["POST", "PUT", "PATCH", "DELETE"])
+const userAgent = window.navigator?.userAgent || ""
+const isFirefoxIOS = /FxiOS/i.test(userAgent)
+const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
+
+// Mobile browsers can evict HTMX history snapshots aggressively; forcing a
+// reload on cache misses keeps browser back/forward navigation reliable.
+htmx.config.refreshOnHistoryMiss = true
+htmx.config.historyCacheSize = Math.max(htmx.config.historyCacheSize || 0, 20)
 
 const readCookie = (name) => {
   if (!document?.cookie) {
@@ -114,6 +122,22 @@ document.body.addEventListener("htmx:responseError", (event) => {
   }
   window.alert(csrfErrorMessage)
 })
+document.body.addEventListener("htmx:historyCacheMiss", (event) => {
+  const restorePath = event.detail?.path
+  if (typeof restorePath === "string" && restorePath.length > 0) {
+    window.location.assign(restorePath)
+    return
+  }
+  window.location.reload()
+})
+
+if (isIOS || isFirefoxIOS) {
+  // iOS browsers can fail to restore HTMX snapshots on browser back/forward.
+  // Force a full reload of the active history entry for consistency.
+  window.addEventListener("popstate", () => {
+    window.location.reload()
+  })
+}
 if (typeof htmx.onLoad === "function") {
   htmx.onLoad((content) => {
     if (window.Alpine?.initTree) {
