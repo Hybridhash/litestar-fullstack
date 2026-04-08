@@ -99,24 +99,24 @@ Create or promote a superuser in Railway production:
 
 ```bash
 railway ssh \
-  --project 479a9831-6c68-4c89-93b5-229655b83355 \
   --environment production \
   --service "Litestar Web Frontend" \
-  'bash -lc "/opt/venv/bin/app users create-user --email admin@example.net --name AdminUser --password SuperAdmin123! --superuser"'
+  'bash -lc "/opt/venv/bin/app users create-user --email \"YOUR_ADMIN_EMAIL\" --name \"YOUR_ADMIN_NAME\" --password \"YOUR_STRONG_PASSWORD\" --superuser"'
 ```
 
 If the user already exists:
 
 ```bash
 railway ssh \
-  --project 479a9831-6c68-4c89-93b5-229655b83355 \
   --environment production \
   --service "Litestar Web Frontend" \
-  'bash -lc "/opt/venv/bin/app users promote-to-superuser --email admin@example.net"'
+  'bash -lc "/opt/venv/bin/app users promote-to-superuser --email \"YOUR_ADMIN_EMAIL\""'
 ```
 
 Why this pattern is required:
 
+- Replace the placeholder admin values before running the command, and use a strong unique password.
+- Run `railway link` first so the CLI targets the correct project. If you manage multiple Railway projects, add `--project <your-project-id>` explicitly.
 - `railway ssh ... 'bash -lc ...'` ensures Nix profile libraries are loaded (required for `greenlet` / SQLAlchemy async path).
 - `/opt/venv/bin/app` avoids PATH issues inside non-interactive container commands.
 - Avoid running `railway run ... uv run app ...` from repository root when `.env` exists; this project loads `.env` with override and may point commands to your local database.
