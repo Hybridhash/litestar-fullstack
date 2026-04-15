@@ -19,6 +19,7 @@ from litestar.logging.config import (
     default_structlog_standard_lib_processors,
 )
 from litestar.middleware.logging import LoggingMiddlewareConfig
+from litestar.middleware.rate_limit import RateLimitConfig, get_remote_address
 from litestar.plugins.problem_details import ProblemDetailsConfig
 from litestar.plugins.sqlalchemy import AlembicAsyncConfig, AsyncSessionConfig, SQLAlchemyAsyncConfig
 from litestar.plugins.structlog import StructlogConfig
@@ -65,6 +66,12 @@ _jinjax_catalog.add_folder(str(settings.vite.TEMPLATE_DIR))
 _jinja_env.globals["catalog"] = _jinjax_catalog
 templates: TemplateConfig = TemplateConfig(instance=JinjaTemplateEngine.from_environment(_jinja_env))
 problem_details = ProblemDetailsConfig(enable_for_all_http_exceptions=True)
+rate_limit = RateLimitConfig(
+    rate_limit=settings.rate_limit.rate_limit,
+    exclude=cast("list[str]", settings.rate_limit.EXCLUDE),
+    exclude_opt_key=settings.rate_limit.EXCLUDE_OPT_KEY,
+    identifier_for_request=get_remote_address,
+)
 
 
 vite = ViteConfig(

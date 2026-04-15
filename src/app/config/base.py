@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from litestar.data_extractors import ResponseExtractorField
+    from litestar.middleware.rate_limit import DurationUnit
 
 DEFAULT_MODULE_NAME = "app"
 BASE_DIR: Final[Path] = module_to_os_path(DEFAULT_MODULE_NAME)
@@ -355,6 +356,61 @@ class RedisSettings:
 
 
 @dataclass
+class RateLimitSettings:
+    """Rate limit middleware configuration."""
+
+    ENABLED: bool = field(default_factory=get_env("RATE_LIMIT_ENABLED", False))
+    """Enable rate-limit middleware."""
+    UNIT: str = field(default_factory=get_env("RATE_LIMIT_UNIT", "minute"))
+    """Rate-limit time unit. Supported values: second, minute, hour, day."""
+    REQUESTS: int = field(default_factory=get_env("RATE_LIMIT_REQUESTS", 60))
+    """Allowed request count per configured unit."""
+    EXCLUDE: list[str] | str = field(
+        default_factory=get_env(
+            "RATE_LIMIT_EXCLUDE",
+            [
+                "/health",
+                "^/public/",
+                "^/saq/static/",
+            ],
+            list[str],
+        ),
+    )
+    """Path patterns to exclude from rate limiting."""
+    EXCLUDE_OPT_KEY: str | None = field(default_factory=get_env("RATE_LIMIT_EXCLUDE_OPT_KEY", "disable_rate_limit"))
+    """Route opt key used to disable rate limiting for specific handlers."""
+
+    def __post_init__(self) -> None:
+        if isinstance(self.EXCLUDE, str):
+            if self.EXCLUDE.startswith("[") and self.EXCLUDE.endswith("]"):
+                try:
+                    self.EXCLUDE = cast("list[str]", json.loads(self.EXCLUDE))
+                except (SyntaxError, ValueError) as exc:
+                    msg = "RATE_LIMIT_EXCLUDE is not a valid list representation."
+                    raise ValueError(msg) from exc
+            else:
+                self.EXCLUDE = [item.strip() for item in self.EXCLUDE.split(",") if item.strip()]
+
+        unit = self.UNIT.strip().lower()
+        if unit not in {"second", "minute", "hour", "day"}:
+            msg = "RATE_LIMIT_UNIT must be one of: second, minute, hour, day."
+            raise ValueError(msg)
+        self.UNIT = unit
+
+        if self.REQUESTS <= 0:
+            msg = "RATE_LIMIT_REQUESTS must be greater than 0."
+            raise ValueError(msg)
+
+        if self.EXCLUDE_OPT_KEY is not None:
+            opt_key = self.EXCLUDE_OPT_KEY.strip()
+            self.EXCLUDE_OPT_KEY = opt_key or None
+
+    @property
+    def rate_limit(self) -> tuple[DurationUnit, int]:
+        return cast("tuple[DurationUnit, int]", (self.UNIT, self.REQUESTS))
+
+
+@dataclass
 class AppSettings:
     """Application configuration"""
 
@@ -423,6 +479,7 @@ class Settings:
     log: LogSettings = field(default_factory=LogSettings)
     redis: RedisSettings = field(default_factory=RedisSettings)
     saq: SaqSettings = field(default_factory=SaqSettings)
+    rate_limit: RateLimitSettings = field(default_factory=RateLimitSettings)
 
     @classmethod
     def from_env(cls, dotenv_filename: str = ".env") -> Settings:

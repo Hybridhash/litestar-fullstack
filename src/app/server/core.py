@@ -120,6 +120,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         app_config.cors_config = config.cors
         app_config.csrf_config = config.csrf
         app_config.request_class = HTMXRequest
+        if settings.rate_limit.ENABLED:
+            app_config.middleware.append(config.rate_limit.middleware)
         # templates
         app_config.template_config = config.templates
         # plugins
