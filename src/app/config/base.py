@@ -5,6 +5,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+from ipaddress import ip_network
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, cast
 
@@ -21,6 +22,7 @@ from ._utils import get_env
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from ipaddress import IPv4Network, IPv6Network
 
     from litestar.data_extractors import ResponseExtractorField
     from litestar.middleware.rate_limit import DurationUnit
@@ -379,17 +381,26 @@ class RateLimitSettings:
     """Path patterns to exclude from rate limiting."""
     EXCLUDE_OPT_KEY: str | None = field(default_factory=get_env("RATE_LIMIT_EXCLUDE_OPT_KEY", "disable_rate_limit"))
     """Route opt key used to disable rate limiting for specific handlers."""
+    TRUST_PROXY_IP_HEADERS: bool = field(default_factory=get_env("RATE_LIMIT_TRUST_PROXY_IP_HEADERS", False))
+    """Trust proxy-forwarded IP headers for rate-limit identity."""
+    TRUSTED_PROXY_CIDRS: list[str] | str = field(default_factory=get_env("RATE_LIMIT_TRUSTED_PROXY_CIDRS", [], list[str]))
+    """Trusted proxy CIDRs allowed to supply forwarded client IP headers."""
+
+    @staticmethod
+    def _parse_string_list(value: list[str] | str, env_name: str) -> list[str]:
+        if isinstance(value, list):
+            return [item.strip() for item in value if item.strip()]
+        if value.startswith("[") and value.endswith("]"):
+            try:
+                parsed_value = cast("list[str]", json.loads(value))
+            except (SyntaxError, ValueError) as exc:
+                msg = f"{env_name} is not a valid list representation."
+                raise ValueError(msg) from exc
+            return [item.strip() for item in parsed_value if item.strip()]
+        return [item.strip() for item in value.split(",") if item.strip()]
 
     def __post_init__(self) -> None:
-        if isinstance(self.EXCLUDE, str):
-            if self.EXCLUDE.startswith("[") and self.EXCLUDE.endswith("]"):
-                try:
-                    self.EXCLUDE = cast("list[str]", json.loads(self.EXCLUDE))
-                except (SyntaxError, ValueError) as exc:
-                    msg = "RATE_LIMIT_EXCLUDE is not a valid list representation."
-                    raise ValueError(msg) from exc
-            else:
-                self.EXCLUDE = [item.strip() for item in self.EXCLUDE.split(",") if item.strip()]
+        self.EXCLUDE = self._parse_string_list(self.EXCLUDE, "RATE_LIMIT_EXCLUDE")
 
         unit = self.UNIT.strip().lower()
         if unit not in {"second", "minute", "hour", "day"}:
@@ -405,9 +416,28 @@ class RateLimitSettings:
             opt_key = self.EXCLUDE_OPT_KEY.strip()
             self.EXCLUDE_OPT_KEY = opt_key or None
 
+        self.TRUSTED_PROXY_CIDRS = self._parse_string_list(
+            self.TRUSTED_PROXY_CIDRS,
+            "RATE_LIMIT_TRUSTED_PROXY_CIDRS",
+        )
+        for cidr in self.TRUSTED_PROXY_CIDRS:
+            try:
+                ip_network(cidr, strict=False)
+            except ValueError as exc:
+                msg = f"RATE_LIMIT_TRUSTED_PROXY_CIDRS contains invalid CIDR: {cidr}"
+                raise ValueError(msg) from exc
+
+        if self.TRUST_PROXY_IP_HEADERS and not self.TRUSTED_PROXY_CIDRS:
+            msg = "RATE_LIMIT_TRUSTED_PROXY_CIDRS must be set when RATE_LIMIT_TRUST_PROXY_IP_HEADERS=true."
+            raise ValueError(msg)
+
     @property
     def rate_limit(self) -> tuple[DurationUnit, int]:
         return cast("tuple[DurationUnit, int]", (self.UNIT, self.REQUESTS))
+
+    @property
+    def trusted_proxy_networks(self) -> tuple[IPv4Network | IPv6Network, ...]:
+        return tuple(ip_network(cidr, strict=False) for cidr in self.TRUSTED_PROXY_CIDRS)
 
 
 @dataclass
