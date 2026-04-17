@@ -252,6 +252,8 @@ class SaqSettings:
     """If true, the worker admin UI is hosted on worker startup."""
     USE_SERVER_LIFESPAN: bool = field(default_factory=get_env("SAQ_USE_SERVER_LIFESPAN", True))
     """Auto start and stop `saq` processes when starting the Litestar application."""
+    DEMO_CRON_ENABLED: bool = field(default_factory=get_env("SAQ_DEMO_CRON_ENABLED", False))
+    """Enable demo scheduled jobs. Keep disabled in production to avoid unnecessary worker load."""
 
 
 @dataclass

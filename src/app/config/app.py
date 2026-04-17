@@ -110,27 +110,35 @@ saq = SAQConfig(
             dsn=settings.redis.URL,
             name="system-tasks",
             tasks=["app.domain.system.tasks.system_task", "app.domain.system.tasks.system_upkeep"],
-            scheduled_tasks=[
-                CronJob(
-                    function="app.domain.system.tasks.system_upkeep",
-                    unique=True,
-                    cron="0 * * * *",
-                    timeout=500,
-                ),
-            ],
+            scheduled_tasks=(
+                [
+                    CronJob(
+                        function="app.domain.system.tasks.system_upkeep",
+                        unique=True,
+                        cron="0 * * * *",
+                        timeout=500,
+                    ),
+                ]
+                if settings.saq.DEMO_CRON_ENABLED
+                else []
+            ),
         ),
         QueueConfig(
             dsn=settings.redis.URL,
             name="background-tasks",
             tasks=["app.domain.system.tasks.background_worker_task"],
-            scheduled_tasks=[
-                CronJob(
-                    function="app.domain.system.tasks.background_worker_task",
-                    unique=True,
-                    cron="* * * * *",
-                    timeout=300,
-                ),
-            ],
+            scheduled_tasks=(
+                [
+                    CronJob(
+                        function="app.domain.system.tasks.background_worker_task",
+                        unique=True,
+                        cron="* * * * *",
+                        timeout=300,
+                    ),
+                ]
+                if settings.saq.DEMO_CRON_ENABLED
+                else []
+            ),
         ),
     ],
 )
