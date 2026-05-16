@@ -75,6 +75,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         )
         from app.domain.accounts.deps import provide_user  # noqa: PLC0415
         from app.domain.accounts.guards import auth as jwt_auth  # noqa: PLC0415
+        from app.domain.accounts.mobile_service import MobileNumberService  # noqa: PLC0415
         from app.domain.accounts.services import (  # noqa: PLC0415
             RoleService,
             UserService,
@@ -120,6 +121,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         app_config.cors_config = config.cors
         app_config.csrf_config = config.csrf
         app_config.request_class = HTMXRequest
+        app_config.before_send = [*(app_config.before_send or []), config.csp.before_send]
         if settings.rate_limit.ENABLED:
             app_config.middleware.append(config.rate_limit.middleware)
         # templates
@@ -164,6 +166,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
                 "UUID": UUID,
                 "UserService": UserService,
                 "RoleService": RoleService,
+                "MobileNumberService": MobileNumberService,
                 "TeamService": TeamService,
                 "TeamMemberService": TeamMemberService,
                 "UserRoleService": UserRoleService,
@@ -182,7 +185,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             key_builder=self._cache_key_builder,
         )
         app_config.stores = StoreRegistry(default_factory=self.redis_store_factory)
-        app_config.on_shutdown.append(self.redis.aclose)  # type: ignore[attr-defined]
+        app_config.on_shutdown.append(settings.redis.close_all_clients)
         # dependencies
         dependencies = {"current_user": Provide(provide_user)}
         app_config.dependencies.update(dependencies)

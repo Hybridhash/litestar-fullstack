@@ -50,7 +50,7 @@ class SystemController(Controller):
 
         db_status = "online" if db_ping else "offline"
         try:
-            cache_ping = await settings.redis.get_client().ping()
+            cache_ping = await settings.redis.client.ping()
         except RedisError:
             cache_ping = False
         cache_status = "online" if cache_ping else "offline"

@@ -1,0 +1,44 @@
+{#def mobile, dev_code=None, message="", variant="info", otp_delivery_label="WhatsApp", otp_delivery_message="WhatsApp" #}
+<div id="otp-form-fields" class="space-y-3">
+  <div class="alert alert-{{ variant if variant in ["success", "error", "warning", "info"] else "info" }} text-sm">
+    <span>{{ message or ("A verification code has been sent by " ~ otp_delivery_message ~ ".") }}</span>
+  </div>
+  {% if variant == "error" %}
+  <p class="text-xs text-base-content/70">
+    Enter the latest 6-digit code sent to your WhatsApp, or request a new one below.
+  </p>
+  {% endif %}
+  {% if dev_code %}
+  <div class="alert alert-warning text-sm">
+    <span>Local development OTP: <span class="font-mono font-semibold">{{ dev_code }}</span></span>
+  </div>
+  {% endif %}
+  <label class="form-control w-full">
+    <div class="label">
+      <span class="label-text">Verification Code</span>
+    </div>
+    <input
+      class="input input-bordered w-full tracking-widest text-center text-lg"
+      type="text"
+      name="code"
+      placeholder="000000"
+      maxlength="6"
+      inputmode="numeric"
+      pattern="[0-9]{6}"
+      required
+      autocomplete="one-time-code"
+    />
+  </label>
+  <input type="hidden" name="mobile" value="{{ mobile }}">
+  <base.CSRFToken />
+  <button
+    type="button"
+    class="btn btn-primary btn-block"
+    hx-post="/api/access/verify/check-otp"
+    hx-target="#otp-section"
+    hx-swap="innerHTML"
+    hx-include="#otp-form-fields"
+  >
+    Verify Code
+  </button>
+</div>

@@ -185,7 +185,7 @@ requirements.txt
 .tests
 !.tests/__init__.py
 .tests/*
-tests/*
+tests/
 
 .kiro/
 kiro/*
@@ -198,3 +198,14 @@ specs/
 
 reference/*
 .reference/*
+
+playwright-mcp/*
+.playwright-mcp
+tools/playwright/
+
+# Alembic migration scripts (generated fresh per deployment)
+src/app/db/migrations/versions/*
+!src/app/db/migrations/versions/__init__.py
+
+# Redis AOF persistence (local dev/testing only)
+appendonlydir/

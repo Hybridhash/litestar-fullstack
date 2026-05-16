@@ -1,16 +1,8 @@
 {#def error="" #}
 <!-- HTMX events keep Alpine's loading state in sync with the request. -->
-<form
-  class="space-y-4"
-  method="post"
-  action="/api/access/login"
-  hx-post="/api/access/login"
-  hx-target="#auth-feedback"
-  hx-swap="innerHTML"
-  x-data="{ loading: false }"
-  hx-on::before-request="$el.__x.$data.loading = true"
-  hx-on::after-request="$el.__x.$data.loading = false"
->
+<form class="space-y-4" method="post" action="/api/access/login" hx-post="/api/access/login" hx-target="#auth-feedback"
+  hx-swap="innerHTML" x-data="htmxForm" x-on:htmx:before-request.camel="startLoading()"
+  x-on:htmx:after-request.camel="stopLoading()">
   <base.CSRFToken />
   <forms.TextField label="Email" name="username" type="email" placeholder="you@example.com" required={{ True }} />
   <forms.TextField label="Password" name="password" type="password" placeholder="••••••••" required={{ True }} />
@@ -20,7 +12,7 @@
   </ui.Button>
   <div id="auth-feedback" class="text-sm text-error">
     {% if error %}
-      {{ error }}
+    {{ error }}
     {% endif %}
   </div>
 </form>

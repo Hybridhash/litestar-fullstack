@@ -9,6 +9,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from .mobile_number import MobileNumber
     from .oauth_account import UserOauthAccount
     from .team_member import TeamMember
     from .user_role import UserRole
@@ -51,6 +52,12 @@ class User(UUIDAuditBase):
         lazy="noload",
         cascade="all, delete",
         uselist=True,
+    )
+    mobile_numbers: Mapped[list[MobileNumber]] = relationship(
+        back_populates="user",
+        lazy="selectin",
+        uselist=True,
+        cascade="all, delete",
     )
 
     @hybrid_property

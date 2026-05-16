@@ -98,11 +98,14 @@ def create_user(
             email=email,
             name=name,
             password=password,
-            is_superuser=superuser,
         )
         async with alchemy.get_session() as db_session:
             users_service = await anext(provide_users_service(db_session))
-            user = await users_service.create(data=obj_in.to_dict(), auto_commit=True)
+            user = await users_service.create(data=obj_in.to_dict(), auto_commit=not superuser)
+            if superuser:
+                user.is_superuser = True
+                await users_service.repository.update(user)
+                await db_session.commit()
             console.print(f"User created: {user.email}")
 
     console.rule("Create a new application user.")
@@ -132,25 +135,19 @@ def promote_to_superuser(email: str) -> None:
     from rich import get_console  # noqa: PLC0415
 
     from app.config.app import alchemy  # noqa: PLC0415
-    from app.domain.accounts.schemas import UserUpdate  # noqa: PLC0415
-    from app.domain.accounts.services import UserService  # noqa: PLC0415
+    from app.domain.accounts.deps import provide_users_service  # noqa: PLC0415
 
     console = get_console()
 
     async def _promote_to_superuser(email: str) -> None:
-        async with UserService.new(config=alchemy) as users_service:
+        async with alchemy.get_session() as db_session:
+            users_service = await anext(provide_users_service(db_session))
             user = await users_service.get_one_or_none(email=email)
             if user:
                 console.print(f"Promoting user: %{user.email}")
-                user_in = UserUpdate(
-                    email=user.email,
-                    is_superuser=True,
-                )
-                user = await users_service.update(
-                    item_id=user.id,
-                    data=user_in.to_dict(),
-                    auto_commit=True,
-                )
+                user.is_superuser = True
+                await users_service.repository.update(user)
+                await db_session.commit()
                 console.print(f"Upgraded {email} to superuser")
             else:
                 console.print(f"User not found: {email}")

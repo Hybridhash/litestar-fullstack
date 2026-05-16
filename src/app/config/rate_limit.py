@@ -10,6 +10,7 @@ from ipaddress import ip_address
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from ipaddress import IPv4Network, IPv6Network
 
 
@@ -20,7 +21,7 @@ def normalize_ip(value: str | None) -> str | None:
     lists (``"client, proxy1, proxy2"``).  This function takes the first
     entry, strips whitespace, and validates it as an IP address.
 
-    Returns ``None`` for empty, missing, or unparseable values.
+    Returns ``None`` for empty, missing, or unparsable values.
     """
     if not value:
         return None
@@ -48,7 +49,7 @@ def create_rate_limit_identifier(
     *,
     trust_proxy_headers: bool,
     trusted_networks: tuple[IPv4Network | IPv6Network, ...],
-) -> callable:
+) -> Callable[[object], str]:
     """Build a request → IP identifier function for :class:`RateLimitConfig`.
 
     The returned callable is passed directly to

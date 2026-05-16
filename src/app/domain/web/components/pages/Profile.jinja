@@ -14,25 +14,12 @@
       <div class="card-body gap-4">
         <h3 class="card-title text-lg">Update profile</h3>
         <!-- HTMX events keep Alpine's loading state in sync with the request. -->
-        <form
-          class="space-y-3"
-          x-data="{ loading: false }"
-          action="/api/me"
-          method="post"
-          hx-post="/api/me"
-          hx-target="#profile-card"
-          hx-swap="outerHTML"
-          hx-on::before-request="$el.__x.$data.loading = true"
-          hx-on::after-request="$el.__x.$data.loading = false"
-        >
+        <form class="space-y-3" x-data="htmxForm" action="/api/me" method="post" hx-post="/api/me"
+          hx-target="#profile-card" hx-swap="outerHTML" x-on:htmx:before-request.camel="startLoading()"
+          x-on:htmx:after-request.camel="stopLoading()">
           <forms.TextField label="Name" name="name" value={{ user.name if user else "" }} />
-          <forms.TextField
-            label="Email"
-            name="email"
-            type="email"
-            value={{ user.email if user else "" }}
-            required={{ True }}
-          />
+          <forms.TextField label="Email" name="email" type="email" value={{ user.email if user else "" }} required={{
+            True }} />
           <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
             <span x-show="!loading">Save changes</span>
             <span x-show="loading">Saving...</span>

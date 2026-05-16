@@ -13,6 +13,7 @@ __all__ = (
     "AccountRegister",
     "User",
     "UserCreate",
+    "UserProfileUpdate",
     "UserRole",
     "UserRoleAdd",
     "UserRoleRevoke",
@@ -45,49 +46,37 @@ class UserRole(CamelizedBaseStruct):
     assigned_at: datetime
 
 
-class OauthAccount(CamelizedBaseStruct):
-    """Holds linked Oauth details for a user."""
-
-    id: UUID
-    oauth_name: str
-    access_token: str
-    account_id: str
-    account_email: str
-    expires_at: int | None = None
-    refresh_token: str | None = None
-
-
 class User(CamelizedBaseStruct):
     """User properties to use for a response."""
 
     id: UUID
     email: str
     name: str | None = None
-    is_superuser: bool = False
     is_active: bool = False
     is_verified: bool = False
     has_password: bool = False
     teams: list[UserTeam] = []
     roles: list[UserRole] = []
-    oauth_accounts: list[OauthAccount] = []
 
 
 class UserCreate(CamelizedBaseStruct):
     email: str
     password: str
     name: str | None = None
-    is_superuser: bool = False
     is_active: bool = True
     is_verified: bool = False
 
 
 class UserUpdate(CamelizedBaseStruct, omit_defaults=True):
     email: str | None | msgspec.UnsetType = msgspec.UNSET
-    password: str | None | msgspec.UnsetType = msgspec.UNSET
     name: str | None | msgspec.UnsetType = msgspec.UNSET
-    is_superuser: bool | None | msgspec.UnsetType = msgspec.UNSET
     is_active: bool | None | msgspec.UnsetType = msgspec.UNSET
     is_verified: bool | None | msgspec.UnsetType = msgspec.UNSET
+
+
+class UserProfileUpdate(CamelizedBaseStruct, omit_defaults=True):
+    email: str | None | msgspec.UnsetType = msgspec.UNSET
+    name: str | None | msgspec.UnsetType = msgspec.UNSET
 
 
 class AccountLogin(CamelizedBaseStruct):
@@ -111,3 +100,16 @@ class UserRoleRevoke(CamelizedBaseStruct):
     """User role revoke ."""
 
     user_name: str
+
+
+class OTPSendRequest(CamelizedBaseStruct):
+    """Request to send OTP to a mobile number."""
+
+    mobile: str | list[str]
+
+
+class OTPCheckRequest(CamelizedBaseStruct):
+    """Request to verify an OTP code."""
+
+    mobile: str | list[str]
+    code: str | list[str]

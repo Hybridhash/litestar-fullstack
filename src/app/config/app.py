@@ -32,12 +32,14 @@ from litestar_vite.loader import render_asset_tag, render_hmr_client, render_rou
 from .base import get_settings
 from .csrf import create_csrf_config, csrf_token
 from .rate_limit import create_rate_limit_identifier
+from .security import create_csp_config
 
 settings = get_settings()
 
 
 compression = CompressionConfig(backend="gzip")
 csrf = create_csrf_config(settings.app)
+csp = create_csp_config(settings.vite)
 cors = CORSConfig(allow_origins=cast("list[str]", settings.app.ALLOWED_CORS_ORIGINS))
 alchemy = SQLAlchemyAsyncConfig(
     engine_instance=settings.db.get_engine(),
