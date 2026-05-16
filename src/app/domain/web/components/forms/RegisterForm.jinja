@@ -1,30 +1,81 @@
-{#def error="" #}
-<!-- HTMX events keep Alpine's loading state in sync with the request. -->
-<form class="space-y-4" method="post" action="/api/access/signup" hx-post="/api/access/signup"
-  hx-target="#register-feedback" hx-swap="innerHTML" x-data="{ loading: false }"
-  hx-on::before-request="$el.__x.$data.loading = true" hx-on::after-request="$el.__x.$data.loading = false">
-  <base.CSRFToken />
-  <forms.TextField label="Name" name="name" type="text" placeholder="Jane Doe" required={{ True }} />
-  <forms.TextField
-    label="Email"
-    name="email"
-    type="email"
-    placeholder="you@example.com"
-    required={{ True }}
-    hx_get="/api/access/signup/email"
-    hx_trigger="keyup changed delay:500ms"
-    hx_target="#register-feedback"
-    hx_swap="innerHTML"
-  />
-  <forms.TextField label="Password" name="password" type="password" placeholder="Create a password" required={{ True
-    }} />
-  <ui.Button type="submit" variant="secondary" block={{ True }} x-bind:disabled="loading">
-    <span x-show="!loading">Create account</span>
-    <span x-show="loading">Creating...</span>
-  </ui.Button>
-  <div id="register-feedback" class="text-sm text-error">
-    {% if error %}
-    {{ error }}
-    {% endif %}
+{#def error="", mobile_verified=False, mobile_verified_ttl=0, masked_mobile="", otp_delivery_label="WhatsApp" #}
+<div x-data="registerForm" data-mobile-verified="{{ 'true' if mobile_verified else 'false' }}"
+  data-mobile-verified-ttl="{{ mobile_verified_ttl | default(0, true) }}"
+  @mobile-verified.window="markMobileVerified($event.detail.seconds)" @otp-sent.window="markOtpSent()"
+  @mobile-verification-reset.window="resetVerifiedState()"
+  @mobile-availability.window="updateMobileAvailability($event.detail)"
+  @otp-cooldown.window="startCooldown($event.detail.seconds)">
+  <!-- Mobile verification (always enabled) -->
+  <div id="otp-send-fields" class="space-y-3 mb-6">
+    <p class="text-sm font-medium text-base-content/80">Verify your mobile number</p>
+    <div class="alert alert-warning text-sm" x-show="verificationExpired" x-cloak>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span>Verification expired. Please verify your mobile number again.</span>
+    </div>
+    <div x-show="!verified">
+      <forms.TextField label="Mobile Number" name="mobile" type="tel" placeholder="+966512345678" required={{ True }}
+        x-model="mobile" x-on:input="resetMobileAvailability()" x-bind:disabled="verified"
+        hx_get="/api/access/signup/mobile" hx_trigger="keyup changed delay:500ms" hx_target="#otp-feedback"
+        hx_swap="innerHTML" />
+      <div id="otp-feedback" class="mt-2 text-sm"></div>
+      <p class="mt-2 text-xs text-error" x-show="mobile.trim() && !isMobileFormatValid()">
+        Enter a valid mobile number in international format (e.g. +966512345678).
+      </p>
+      <div class="mt-2">
+        <button type="button" class="btn btn-secondary btn-block" x-on:htmx:before-request.camel="startSendingOtp()"
+          x-on:htmx:after-request.camel="stopSendingOtp()"
+          x-bind:disabled="sendingOtp || cooldownRemaining > 0 || verified || mobileTaken || !mobile.trim() || !isMobileFormatValid()"
+          hx-post="/api/access/verify/send-otp" hx-target="#otp-section" hx-swap="innerHTML"
+          hx-include="#otp-send-fields, #register-form [name=_csrf_token]">
+          <span x-show="!sendingOtp && cooldownRemaining === 0">Send OTP via {{ otp_delivery_label }}</span>
+          <span x-show="!sendingOtp && cooldownRemaining > 0">
+            Resend blocked for <span x-text="formatCooldown()"></span>
+          </span>
+          <span x-show="sendingOtp" class="loading loading-spinner loading-sm"></span>
+        </button>
+      </div>
+      <p class="text-xs text-base-content/60" x-show="cooldownRemaining > 0">
+        For security, a new code can be requested after the countdown ends.
+      </p>
+    </div>
+    <div id="otp-section">
+      {% if mobile_verified %}
+      {% include "partials/otp_verified.jinja" %}
+      {% endif %}
+    </div>
   </div>
-</form>
+
+  <!-- Divider -->
+  <div class="divider text-xs text-base-content/40" x-show="verified">Account Details</div>
+
+  <!-- Registration form (locked until verified) -->
+  <form id="register-form" class="space-y-4" method="post" action="/api/access/signup" hx-post="/api/access/signup"
+    hx-target="#register-feedback" hx-swap="innerHTML" data-htmx-reset-on-success="true"
+    x-on:htmx:before-request.camel="startSubmitting()" x-on:htmx:after-request.camel="stopSubmitting()">
+    <base.CSRFToken />
+    <div x-bind:class="{ 'opacity-40 pointer-events-none select-none': !verified }">
+      <div class="space-y-4">
+        <forms.TextField label="Name" name="name" type="text" placeholder="Jane Doe" required={{ True }}
+          x-bind:disabled="!verified" />
+        <forms.TextField label="Email" name="email" type="email" placeholder="you@example.com" required={{ True }}
+          x-bind:disabled="!verified" hx_get="/api/access/signup/email" hx_trigger="keyup changed delay:500ms"
+          hx_target="#register-feedback" hx_swap="innerHTML" />
+        <forms.TextField label="Password" name="password" type="password" placeholder="Create a password" required={{
+          True }} x-bind:disabled="!verified" />
+      </div>
+    </div>
+    <button type="submit" class="btn btn-secondary btn-block" x-bind:disabled="!verified || submitting">
+      <span x-show="!submitting">Create account</span>
+      <span x-show="submitting" class="loading loading-spinner loading-sm"></span>
+    </button>
+    <div id="register-feedback" class="text-sm text-error">
+      {% if error %}
+      {{ error }}
+      {% endif %}
+    </div>
+  </form>
+</div>

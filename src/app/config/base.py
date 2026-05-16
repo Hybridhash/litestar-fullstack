@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import binascii
 import json
 import os
@@ -343,12 +344,16 @@ class RedisSettings:
     """Length of time to wait (in seconds) before testing connection health."""
     SOCKET_KEEPALIVE: bool = field(default_factory=get_env("REDIS_SOCKET_KEEPALIVE", True))
     """Length of time to wait (in seconds) between keepalive commands."""
+    _client: Redis | None = field(default=None, init=False, repr=False)
+    """Cached Redis client shared across the application lifecycle."""
+    _loop_clients: dict[int, Redis] = field(default_factory=dict, init=False, repr=False)
+    """Async-loop scoped Redis clients to avoid cross-loop transport errors."""
 
     @property
     def client(self) -> Redis:
         return self.get_client()
 
-    def get_client(self) -> Redis:
+    def _build_client(self) -> Redis:
         return Redis.from_url(
             url=self.URL,
             encoding="utf-8",
@@ -357,6 +362,47 @@ class RedisSettings:
             socket_keepalive=self.SOCKET_KEEPALIVE,
             health_check_interval=self.HEALTH_CHECK_INTERVAL,
         )
+
+    def get_client(self) -> Redis:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is None:
+            if self._client is None:
+                self._client = self._build_client()
+            return self._client
+
+        loop_id = id(loop)
+        client = self._loop_clients.get(loop_id)
+        if client is None:
+            client = self._build_client()
+            self._loop_clients[loop_id] = client
+        return client
+
+    async def close_all_clients(self) -> None:
+        """Close every cached Redis client owned by this settings instance."""
+        seen: set[int] = set()
+        clients: list[Redis] = []
+
+        if self._client is not None:
+            clients.append(self._client)
+            seen.add(id(self._client))
+
+        for client in self._loop_clients.values():
+            if id(client) not in seen:
+                clients.append(client)
+                seen.add(id(client))
+
+        for client in clients:
+            try:
+                await cast("Any", client).aclose()
+            except Exception:  # noqa: BLE001
+                pass
+
+        self._client = None
+        self._loop_clients.clear()
 
 
 @dataclass
@@ -385,7 +431,9 @@ class RateLimitSettings:
     """Route opt key used to disable rate limiting for specific handlers."""
     TRUST_PROXY_IP_HEADERS: bool = field(default_factory=get_env("RATE_LIMIT_TRUST_PROXY_IP_HEADERS", False))
     """Trust proxy-forwarded IP headers for rate-limit identity."""
-    TRUSTED_PROXY_CIDRS: list[str] | str = field(default_factory=get_env("RATE_LIMIT_TRUSTED_PROXY_CIDRS", [], list[str]))
+    TRUSTED_PROXY_CIDRS: list[str] | str = field(
+        default_factory=get_env("RATE_LIMIT_TRUSTED_PROXY_CIDRS", [], list[str])
+    )
     """Trusted proxy CIDRs allowed to supply forwarded client IP headers."""
 
     @staticmethod
@@ -443,6 +491,44 @@ class RateLimitSettings:
 
 
 @dataclass
+class TwilioSettings:
+    """Twilio configuration for OTP delivery."""
+
+    ACCOUNT_SID: str = field(default_factory=get_env("TWILIO_ACCOUNT_SID", ""))
+    """Twilio Account SID."""
+    AUTH_TOKEN: str = field(default_factory=get_env("TWILIO_AUTH_TOKEN", ""))
+    """Twilio Auth Token."""
+    WHATSAPP_FROM: str = field(default_factory=get_env("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886"))
+    """Twilio WhatsApp sender (sandbox default)."""
+    OTP_CODE_TTL: int = field(default_factory=get_env("OTP_CODE_TTL", 300))
+    """Seconds before an OTP code expires in Redis."""
+    OTP_ATTEMPTS_TTL: int = field(default_factory=get_env("OTP_ATTEMPTS_TTL", 300))
+    """Seconds before OTP verification-check attempts reset."""
+    OTP_SEND_ATTEMPTS_TTL: int = field(default_factory=get_env("OTP_SEND_ATTEMPTS_TTL", 3600))
+    """Seconds before OTP send-attempt counters reset."""
+    OTP_MAX_ATTEMPTS: int = field(default_factory=get_env("OTP_MAX_ATTEMPTS", 3))
+    """Maximum OTP verification attempts before lockout."""
+    VERIFIED_MOBILE_TTL: int = field(default_factory=get_env("VERIFIED_MOBILE_TTL", 300))
+    """Seconds a verified mobile remains valid before registration must complete."""
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.ACCOUNT_SID and self.AUTH_TOKEN and self.WHATSAPP_FROM and "*" not in self.WHATSAPP_FROM)
+
+    @property
+    def otp_delivery_label(self) -> str:
+        return "WhatsApp"
+
+    @property
+    def otp_delivery_message(self) -> str:
+        return self.otp_delivery_label
+
+    @property
+    def verified_via(self) -> str:
+        return "whatsapp"
+
+
+@dataclass
 class AppSettings:
     """Application configuration"""
 
@@ -466,6 +552,8 @@ class AppSettings:
     """CSRF Header Name"""
     CSRF_COOKIE_SECURE: bool = field(default_factory=get_env("CSRF_COOKIE_SECURE", False))
     """CSRF Secure Cookie"""
+    AUTH_COOKIE_SECURE: bool = field(default_factory=get_env("AUTH_COOKIE_SECURE", False))
+    """JWT auth cookie secure flag."""
     JWT_ENCRYPTION_ALGORITHM: str = field(default_factory=lambda: "HS256")
     """JWT Encryption Algorithm"""
     GITHUB_OAUTH2_CLIENT_ID: str = field(default_factory=get_env("GITHUB_OAUTH2_CLIENT_ID", ""))
@@ -500,6 +588,8 @@ class AppSettings:
 
         if not self.CSRF_COOKIE_SECURE and self.URL.lower().startswith("https://"):
             self.CSRF_COOKIE_SECURE = True
+        if not self.AUTH_COOKIE_SECURE and self.URL.lower().startswith("https://"):
+            self.AUTH_COOKIE_SECURE = True
 
 
 @dataclass
@@ -512,6 +602,7 @@ class Settings:
     redis: RedisSettings = field(default_factory=RedisSettings)
     saq: SaqSettings = field(default_factory=SaqSettings)
     rate_limit: RateLimitSettings = field(default_factory=RateLimitSettings)
+    twilio: TwilioSettings = field(default_factory=TwilioSettings)
 
     @classmethod
     def from_env(cls, dotenv_filename: str = ".env") -> Settings:

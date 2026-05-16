@@ -28,6 +28,8 @@ dependencies = [
   "httptools",
   "httpx-oauth>=0.16.1",
   "nh3",
+  "twilio>=9.0.0",
+  "phonenumbers>=8.13.0",
 ]
 description = "Opinionated template for a Litestar application."
 keywords = ["litestar", "sqlalchemy", "alembic", "fullstack", "api", "asgi", "litestar", "vite", "spa"]

@@ -78,4 +78,10 @@
   "python.testing.pytestArgs": [
     "tests"
   ],
+  "chat.tools.terminal.autoApprove": {
+    "npm init": true,
+    "true": true,
+    "npm i": true,
+    "npx playwright": true
+  },
 }

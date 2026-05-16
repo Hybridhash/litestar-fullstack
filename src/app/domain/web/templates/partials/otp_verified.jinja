@@ -1,0 +1,31 @@
+<div class="space-y-2" x-show="verified">
+  <div class="alert alert-success text-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>
+      Mobile number verified!
+      {% if masked_mobile %}
+        <span class="font-mono">{{ masked_mobile }}</span>
+      {% endif %}
+      Complete the form below to create your account.
+    </span>
+  </div>
+  <p class="text-xs text-base-content/70">
+    This number is verified but not linked to an account yet. It expires in
+    <span class="font-semibold" x-text="formatVerifiedRemaining()"></span>.
+  </p>
+  <p class="text-xs text-warning" x-show="verifiedRemaining > 0 && verifiedRemaining <= 60">
+    ⚠ Verification expiring soon — complete registration now.
+  </p>
+  <button
+    type="button"
+    class="btn btn-ghost btn-xs"
+    hx-post="/api/access/verify/reset"
+    hx-target="#otp-section"
+    hx-swap="innerHTML"
+    hx-include="#register-form [name=_csrf_token]"
+  >
+    Verify a different number
+  </button>
+</div>

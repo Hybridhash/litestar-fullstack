@@ -13,7 +13,13 @@
         Join your team and start building with the new SSR stack.
       </p>
       <div class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
-        <forms.RegisterForm error={{ error }} />
+        <forms.RegisterForm
+          error={{ error }}
+          mobile_verified={{ mobile_verified }}
+          mobile_verified_ttl={{ mobile_verified_ttl }}
+          masked_mobile={{ masked_mobile }}
+          otp_delivery_label={{ otp_delivery_label }}
+        />
       </div>
       <p class="text-sm text-base-content/60">
         Already have an account?

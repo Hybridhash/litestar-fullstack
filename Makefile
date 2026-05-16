@@ -197,6 +197,12 @@ start-infra:                                        ## Start local containers
 	@docker compose -f deploy/docker-compose.infra.yml up -d --force-recreate >/dev/null 2>&1
 	@echo "${OK} Infrastructure is ready"
 
+.PHONY: configure-twilio
+configure-twilio:                                   ## Prompt for Twilio WhatsApp OTP settings and write them to ENV_FILE (default: .env)
+	@echo "${INFO} Configuring Twilio settings..."
+	@uv run python tools/configure_twilio_env.py "$(if $(ENV_FILE),$(ENV_FILE),.env)"
+	@echo "${OK} Twilio configuration updated"
+
 .PHONY: stop-infra
 stop-infra:                                         ## Stop local containers
 	@echo "${INFO} Stopping infrastructure... 🛑"

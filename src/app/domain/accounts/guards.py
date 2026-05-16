@@ -101,6 +101,7 @@ auth = OAuth2PasswordBearerAuth[m.User](
     retrieve_user_handler=current_user_from_token,
     token_secret=settings.app.SECRET_KEY,
     token_url=urls.ACCOUNT_LOGIN,
+    secure=settings.app.AUTH_COOKIE_SECURE,
     exclude=[
         constants.HEALTH_ENDPOINT,
         urls.ACCOUNT_LOGIN,

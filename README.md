@@ -50,6 +50,7 @@ make install
 ```bash
 cp .env.local.example .env
 make start-infra # this starts a database and redis instance only
+make configure-twilio # optional: prompts for Twilio WhatsApp OTP settings and writes them to .env
 # Note: the Postgres Docker image and data mount support Postgres 18+ by default. The image version is controlled by POSTGRES_VERSION (default: 18); if you have an existing DB volume created by an older Postgres version, back it up before switching or set POSTGRES_VERSION to the older version (e.g., 15).
 # this will start the SAQ worker, Vite development process, and Litestar
 uv run app run
@@ -57,6 +58,12 @@ uv run app run
 # to stop the database and redis, run
 make stop-infra
 ```
+
+Notes:
+
+- `make configure-twilio` updates `.env` by default. Use `ENV_FILE=.env.somefile` if you keep a different local env file.
+- The helper prompts for a real `TWILIO_AUTH_TOKEN` without echoing it back to the terminal.
+- The helper configures the direct WhatsApp OTP sender used by the application.
 
 ### Docker
 
@@ -141,6 +148,114 @@ Check out the [documentation][docs] for more information.
 
 [//]: # "links"
 [docs]: https://docs.fullstack.litestar.dev/
+
+---
+
+## Production Deployment: Cloudflare + Railway
+
+### Rate Limiting
+
+This application includes a configurable rate-limiting middleware built on Litestar's `RateLimitConfig`. It throttles requests per client IP to protect against abuse and brute-force attacks.
+
+#### Default Settings
+
+| Environment Variable | Default | Description |
+|---|---|---|
+| `RATE_LIMIT_ENABLED` | `false` | Master switch for rate limiting |
+| `RATE_LIMIT_UNIT` | `minute` | Time window: `second`, `minute`, `hour`, or `day` |
+| `RATE_LIMIT_REQUESTS` | `60` | Max requests allowed per unit per client |
+| `RATE_LIMIT_EXCLUDE` | `/health,^/public/,^/saq/static/` | Comma-separated paths excluded from limiting |
+| `RATE_LIMIT_EXCLUDE_OPT_KEY` | `disable_rate_limit` | Route opt key to exempt individual handlers |
+
+#### Cloudflare Proxy Trust (Required for Correct Per-User Limiting)
+
+When deployed behind Cloudflare, the app sees Cloudflare's edge server IPs instead of real client IPs. Without proxy trust configured, all users share rate-limit buckets grouped by proxy IP, making the limiter ineffective.
+
+| Environment Variable | Default | Description |
+|---|---|---|
+| `RATE_LIMIT_TRUST_PROXY_IP_HEADERS` | `false` | Enable reading real client IP from proxy headers |
+| `RATE_LIMIT_TRUSTED_PROXY_CIDRS` | (empty) | Comma-separated CIDR ranges of trusted proxies |
+
+When `TRUST_PROXY_IP_HEADERS=true`, the identifier reads the real client IP from `CF-Connecting-IP` (Cloudflare) or `X-Real-IP` (Railway/nginx), but **only if** the direct connection IP is within `TRUSTED_PROXY_CIDRS`. Requests from untrusted IPs have their headers ignored (anti-spoofing).
+
+**Recommended production values:**
+
+```bash
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_TRUST_PROXY_IP_HEADERS=true
+RATE_LIMIT_TRUSTED_PROXY_CIDRS=0.0.0.0/0,::/0
+```
+
+#### Security Risks to Consider
+
+> **Important:** The `0.0.0.0/0,::/0` CIDR setting trusts proxy headers from **any** source. This is only safe if all traffic is forced through Cloudflare.
+
+**Before enabling permissive proxy trust, you must:**
+
+1. **Disable the Railway default public domain.** Railway generates a `*.up.railway.app` domain for every service. If this is still active, attackers can bypass Cloudflare and hit your app directly with spoofed `CF-Connecting-IP` headers. Go to Railway dashboard → Web service → Settings → Networking → remove or disable the `*.up.railway.app` domain. Keep only your custom domain (e.g., `kipeer.com`, `www.kipeer.com`) which routes through Cloudflare.
+
+2. **Verify DNS points to Cloudflare, not Railway.** Your domain's DNS A/CNAME records should point to Cloudflare (orange cloud enabled), not directly to Railway's IP.
+
+**Optional hardening:**
+
+- Add a Cloudflare Transform Rule that injects a secret header (e.g., `X-Origin-Verify: <secret>`) on every request. Validate this header in your app before trusting forwarded IP headers. This prevents spoofing even if the origin IP is discovered.
+
+**If you cannot close the Railway bypass path**, use Cloudflare's published IP ranges instead of `0.0.0.0/0`:
+
+```bash
+RATE_LIMIT_TRUSTED_PROXY_CIDRS=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22
+```
+
+Note: With Railway's internal load balancer between Cloudflare and your app, the immediate peer IP may not match Cloudflare's ranges. In this case, the strict CIDR list won't work and you need the permissive `0.0.0.0/0` setting with the Railway domain disabled.
+
+#### Protection Stack Summary
+
+| Layer | What It Stops | Configuration |
+|---|---|---|
+| Cloudflare (edge) | L3/L4 DDoS, bot traffic, known bad IPs | Cloudflare dashboard |
+| Railway (infra) | Network floods, 10k connection limit, 11k req/sec | Automatic |
+| App rate limiter | Per-IP request abuse, brute force | `RATE_LIMIT_*` env vars |
+| CSRF protection | Cross-site request forgery | Built-in (enabled by default) |
+| CORS | Unauthorized cross-origin requests | `ALLOWED_CORS_ORIGINS` env var |
+
+---
+
+### SAQ Worker: Cost Optimization
+
+The SAQ (Simple Asynchronous Queue) worker runs as a separate Railway service for background job processing. The default template includes **demo scheduled tasks** that can cause unexpectedly high costs if left running in production.
+
+#### The Problem
+
+The demo tasks in `src/app/domain/system/tasks.py` are placeholders that do no real work — they just `asyncio.sleep()` and log messages:
+
+- `system_upkeep`: Runs every hour, sleeps for 180 seconds total
+- `background_worker_task`: Runs every minute, sleeps for 20 seconds
+
+Combined with the default `SAQ_CONCURRENCY=10` (10 concurrent polling slots), this creates constant CPU and memory usage. Railway bills cumulative resource-hours, so a worker using 200 MB 24/7 shows up as ~140 GB on the monthly bill.
+
+**Observed cost impact:** ~$33/month for the SAQ Worker alone (90% of total bill), doing zero useful work.
+
+#### Recommended Railway Settings
+
+| Environment Variable | Value | Why |
+|---|---|---|
+| `SAQ_PROCESSES` | `1` | Single worker process |
+| `SAQ_CONCURRENCY` | `1` | Single job slot (not 10) |
+| `SAQ_WEB_ENABLED` | `false` | Disable the admin dashboard |
+| `SAQ_DEMO_CRON_ENABLED` | `false` | Disable demo scheduled tasks |
+| `SAQ_USE_SERVER_LIFESPAN` | `false` | **Set this if you have no real background tasks.** Stops the worker process entirely. Cost goes to $0. |
+
+#### When to Re-enable
+
+When you build real features that need background processing (sending emails, generating reports, processing uploads):
+
+1. Replace the demo tasks in `tasks.py` with real implementations
+2. Set `SAQ_DEMO_CRON_ENABLED=false` (keep demos off)
+3. Set `SAQ_USE_SERVER_LIFESPAN=true`
+4. Configure `SAQ_CONCURRENCY` based on your workload
+5. Add your own `CronJob` entries or enqueue jobs from your route handlers
+
+---
 
 <details>
 

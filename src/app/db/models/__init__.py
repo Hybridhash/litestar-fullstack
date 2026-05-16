@@ -1,3 +1,5 @@
+from .mobile_number import MobileNumber
+from .mobile_type import MobileType
 from .oauth_account import UserOauthAccount
 from .role import Role
 from .tag import Tag
@@ -10,6 +12,8 @@ from .user import User
 from .user_role import UserRole
 
 __all__ = (
+    "MobileNumber",
+    "MobileType",
     "Role",
     "Tag",
     "Team",

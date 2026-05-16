@@ -1,20 +1,20 @@
 {#def id, title="", open=False, close_label="Close", actions=None #}
-<div x-data="{ open: {{ 'true' if open else 'false' }} }">
+<div x-data="modalDialog" data-open="{{ 'true' if open else 'false' }}">
   <dialog id="{{ id }}" class="modal" :open="open">
     <div class="modal-box">
       {% if title %}
-        <h3 class="text-lg font-semibold">{{ title }}</h3>
+      <h3 class="text-lg font-semibold">{{ title }}</h3>
       {% endif %}
       <div class="py-4">
         {{ content }}
       </div>
       <div class="modal-action">
         {% if actions %}
-          {{ actions }}
+        {{ actions }}
         {% else %}
-          <form method="dialog">
-            <button class="btn">{{ close_label }}</button>
-          </form>
+        <form method="dialog">
+          <button class="btn">{{ close_label }}</button>
+        </form>
         {% endif %}
       </div>
     </div>
