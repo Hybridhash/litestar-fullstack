@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 from litestar.enums import ScopeType
 
-from app.config.base import ViteSettings
-
 if TYPE_CHECKING:
     from litestar.types import BeforeMessageSendHookHandler
     from litestar.types.asgi_types import Message, Scope
+
+    from app.config.base import ViteSettings
 
 
 def _dedupe(items: list[str]) -> list[str]:
@@ -32,7 +32,7 @@ def _vite_dev_sources(vite_settings: ViteSettings) -> list[str]:
         return []
 
     host_candidates = ["localhost", "127.0.0.1"]
-    if vite_settings.HOST not in {"0.0.0.0", "", "localhost", "127.0.0.1"}:
+    if vite_settings.HOST and vite_settings.HOST != "0.0.0.0" and vite_settings.HOST not in host_candidates:  # noqa: S104
         host_candidates.insert(0, vite_settings.HOST)
 
     script_sources = [f"http://{host}:{vite_settings.PORT}" for host in host_candidates]
@@ -68,9 +68,7 @@ def build_content_security_policy(vite_settings: ViteSettings) -> str:
 
 def create_csp_before_send_hook(policy: str, *, report_only: bool = False) -> BeforeMessageSendHookHandler:
     """Build a duplicate-safe before_send hook that attaches the CSP header."""
-    header_name = (
-        "content-security-policy-report-only" if report_only else "content-security-policy"
-    ).encode("ascii")
+    header_name = ("content-security-policy-report-only" if report_only else "content-security-policy").encode("ascii")
     header_value = policy.encode("utf-8")
 
     def _apply_header(message: Message) -> None:

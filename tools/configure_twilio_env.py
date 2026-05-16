@@ -27,10 +27,7 @@ def parse_env_file(env_path: Path) -> dict[str, str]:
 def prompt_value(key: str, current: str, secret: bool, default: str, hide_current: bool) -> str:
     effective_default = current or default
     if secret:
-        if effective_default:
-            prompt = f"{key} [press Enter to keep existing]: "
-        else:
-            prompt = f"{key}: "
+        prompt = f"{key} [press Enter to keep existing]: " if effective_default else f"{key}: "
         value = getpass(prompt)
         return value or current
 
@@ -62,8 +59,7 @@ def render_env(existing_lines: list[str], updates: dict[str, str]) -> list[str]:
         if rendered and rendered[-1].strip():
             rendered.append("")
         rendered.append("# Twilio (OTP verification)")
-        for key in missing:
-            rendered.append(f"{key}={updates[key]}")
+        rendered.extend(f"{key}={updates[key]}" for key in missing)
     return rendered
 
 
@@ -73,8 +69,8 @@ def main() -> int:
     existing_values = parse_env_file(env_path)
     existing_lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
 
-    print(f"Configuring Twilio settings in {env_path}")
-    print("For local OTP testing, use a real Auth Token. The placeholder '[AuthToken]' will not work.")
+    sys.stdout.write(f"Configuring Twilio settings in {env_path}\n")
+    sys.stdout.write("For local OTP testing, use a real Auth Token. The placeholder '[AuthToken]' will not work.\n")
 
     updates: dict[str, str] = {}
     for key, default, secret, hide_current in TWILIO_FIELDS:
@@ -82,8 +78,8 @@ def main() -> int:
         updates[key] = prompt_value(key, current, secret, default, hide_current)
     rendered = render_env(existing_lines, updates)
     env_path.write_text("\n".join(rendered) + "\n", encoding="utf-8")
-    print(f"Updated {env_path}")
-    print("Restart the app server after changing Twilio settings.")
+    sys.stdout.write(f"Updated {env_path}\n")
+    sys.stdout.write("Restart the app server after changing Twilio settings.\n")
     return 0
 
 

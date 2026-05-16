@@ -4,6 +4,7 @@ import asyncio
 import binascii
 import json
 import os
+from contextlib import suppress
 from dataclasses import dataclass, field
 from functools import lru_cache
 from ipaddress import ip_network
@@ -396,10 +397,8 @@ class RedisSettings:
                 seen.add(id(client))
 
         for client in clients:
-            try:
+            with suppress(Exception):
                 await cast("Any", client).aclose()
-            except Exception:  # noqa: BLE001
-                pass
 
         self._client = None
         self._loop_clients.clear()
